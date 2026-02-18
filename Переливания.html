@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Переливание</title>
+  <title>Переливания</title>
   <style>
     :root {
       --bg: #eef3fb;
@@ -28,7 +28,7 @@
       padding: 16px;
     }
 
-    .app {
+    .app-shell {
       max-width: 1160px;
       margin: 0 auto;
       display: grid;
@@ -43,7 +43,7 @@
       padding: 14px;
     }
 
-    .top {
+    .app-header {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
@@ -51,9 +51,9 @@
       justify-content: space-between;
     }
 
-    h1 { margin: 0; font-size: 1.35rem; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .stage {
+    .stage-badge {
       background: var(--primary-soft);
       border: 1px solid #c4d8ff;
       color: #164ca7;
@@ -63,7 +63,7 @@
       font-size: 0.88rem;
     }
 
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .app-title { margin: 0; font-size: 1.35rem; }
 
     button {
       border: 1px solid var(--line);
@@ -75,32 +75,49 @@
     }
 
     button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .primary { background: var(--primary-soft); border-color: #b9cefa; color: #164ca7; }
-    .danger { background: #fff0f0; border-color: #f3c6c6; color: #a11f1f; }
-    .success { background: #ebfff2; border-color: #bfeccc; color: #146a3f; }
+    .btn-primary { background: var(--primary-soft); border-color: #b9cefa; color: #164ca7; }
+    .btn-danger { background: #fff0f0; border-color: #f3c6c6; color: #a11f1f; }
+    .btn-success { background: #ebfff2; border-color: #bfeccc; color: #146a3f; }
 
-    .layout {
+    .is-hidden { display: none !important; }
+
+    .game-layout {
       display: grid;
       gap: 14px;
       grid-template-columns: 1fr 320px;
     }
 
-    .hidden { display: none !important; }
+    .hint-text {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
 
-    table {
+    .status-text {
+      margin: 8px 0 0;
+      color: var(--muted);
+      min-height: 22px;
+      font-size: 0.92rem;
+    }
+
+    .config-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.92rem;
       margin-top: 10px;
     }
 
-    th, td {
+    .config-table th,
+    .config-table td {
       border-bottom: 1px solid var(--line);
       padding: 8px 6px;
       text-align: left;
     }
 
-    th { color: var(--muted); font-weight: 600; }
+    .config-table th {
+      color: var(--muted);
+      font-weight: 600;
+    }
 
     input[type="number"] {
       width: 100px;
@@ -109,7 +126,7 @@
       padding: 6px 8px;
     }
 
-    .table-actions {
+    .prep-actions {
       display: flex;
       gap: 8px;
       align-items: center;
@@ -118,21 +135,19 @@
       flex-wrap: wrap;
     }
 
-    .hint { margin: 10px 0 0; color: var(--muted); font-size: 0.9rem; }
-
-    .game-wrap {
+    .game-board {
       position: relative;
       min-height: 380px;
     }
 
-    .bottles {
+    .items-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
       margin-top: 8px;
     }
 
-    .bottle {
+    .item-card {
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 10px;
@@ -141,16 +156,16 @@
       user-select: none;
     }
 
-    .bottle.selected { outline: 2px solid var(--primary); }
+    .item-card.is-selected { outline: 2px solid var(--primary); }
 
-    .b-top {
+    .item-head {
       display: flex;
       justify-content: space-between;
       font-size: 0.87rem;
       margin-bottom: 8px;
     }
 
-    .meter {
+    .item-meter {
       border: 1px solid var(--line);
       border-radius: 10px;
       height: 140px;
@@ -159,7 +174,7 @@
       position: relative;
     }
 
-    .water {
+    .item-meter-fill {
       position: absolute;
       left: 0;
       right: 0;
@@ -168,7 +183,7 @@
       transition: height .2s ease;
     }
 
-    .overlay {
+    .result-overlay {
       position: absolute;
       inset: 0;
       display: grid;
@@ -182,14 +197,14 @@
       text-transform: uppercase;
     }
 
-    .log-head {
+    .log-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
     }
 
-    .log {
+    .log-list {
       margin-top: 10px;
       max-height: 64vh;
       overflow: auto;
@@ -197,7 +212,7 @@
       gap: 8px;
     }
 
-    .log-item {
+    .log-row {
       border: 1px solid var(--line);
       border-radius: 10px;
       padding: 8px;
@@ -205,34 +220,27 @@
       background: #fbfdff;
     }
 
-    .status {
-      margin: 8px 0 0;
-      color: var(--muted);
-      min-height: 22px;
-      font-size: 0.92rem;
-    }
-
     @media (max-width: 980px) {
-      .layout { grid-template-columns: 1fr; }
-      .log { max-height: 260px; }
+      .game-layout { grid-template-columns: 1fr; }
+      .log-list { max-height: 260px; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <section class="panel top">
-      <h1>Игра «Переливания»</h1>
-      <div class="row">
-        <span class="stage">Этап: <span id="stageText">Подготовка</span></span>
-        <button id="playBtn" class="primary">Игра</button>
-        <button id="backBtn" class="danger hidden">Назад в подготовку</button>
-        <button id="resetBtn">Сброс</button>
+  <div class="app-shell">
+    <header class="panel app-header">
+      <h1 class="app-title">Игра «Переливания»</h1>
+      <div class="header-actions">
+        <span class="stage-badge">Этап: <span id="stageText">Подготовка</span></span>
+        <button id="startGameBtn" class="btn-primary">Игра</button>
+        <button id="backToPrepBtn" class="btn-danger is-hidden">Назад в подготовку</button>
+        <button id="resetGameBtn">Сброс</button>
       </div>
-    </section>
+    </header>
 
-    <section id="prepScreen" class="panel">
+    <section id="preparationScreen" class="panel">
       <h2>Подготовка</h2>
-      <table>
+      <table class="config-table">
         <thead>
           <tr>
             <th>Литраж</th>
@@ -241,338 +249,345 @@
             <th></th>
           </tr>
         </thead>
-        <tbody id="prepBody"></tbody>
+        <tbody id="preparationTableBody"></tbody>
       </table>
-      <div class="table-actions">
-        <button id="addRowBtn" class="primary">Добавить бутылку</button>
-        <p class="hint">В колонке «Победа» укажите нужный объем для нужной бутылки. Достаточно задать хотя бы одну цель.</p>
+      <div class="prep-actions">
+        <button id="addPreparationRowBtn" class="btn-primary">Добавить бутылку</button>
+        <p class="hint-text">В колонке «Победа» задайте объем для нужной бутылки. Нужна минимум одна цель.</p>
       </div>
-      <p id="prepStatus" class="status"></p>
+      <p id="preparationStatusText" class="status-text"></p>
     </section>
 
-    <section id="gameLayout" class="layout hidden">
-      <section class="panel game-wrap">
+    <section id="gameAndLogScreen" class="game-layout is-hidden">
+      <section class="panel game-board">
         <h2>Игра</h2>
-        <p class="hint">Кликните по бутылке-источнику, затем по бутылке-приемнику.</p>
-        <div id="gameStatus" class="status"></div>
-        <div id="bottles" class="bottles"></div>
-        <div id="winOverlay" class="overlay hidden">Победа</div>
+        <p class="hint-text">Кликните по бутылке-источнику, затем по бутылке-приемнику.</p>
+        <p id="gameStatusText" class="status-text"></p>
+        <div id="gameItemsGrid" class="items-grid"></div>
+        <div id="resultOverlay" class="result-overlay is-hidden">Победа</div>
       </section>
 
       <aside class="panel">
-        <div class="log-head">
+        <div class="log-header">
           <h2 style="margin:0">Лог</h2>
-          <button id="copyLogBtn" class="success hidden">Скопировать лог</button>
+          <button id="copyLogBtn" class="btn-success is-hidden">Скопировать лог</button>
         </div>
-        <div id="log" class="log"></div>
+        <div id="logList" class="log-list"></div>
       </aside>
     </section>
   </div>
 
   <script>
-    const defaultRows = [
-      { capacity: 8, filled: 0, win: null },
-      { capacity: 5, filled: 0, win: 4 },
-      { capacity: 3, filled: 0, win: null }
+    const DEFAULT_CONFIG = [
+      { valueA: 8, valueB: 0, target: null },
+      { valueA: 5, valueB: 0, target: 4 },
+      { valueA: 3, valueB: 0, target: null }
     ];
 
     const state = {
       stage: 'Подготовка',
-      rows: JSON.parse(JSON.stringify(defaultRows)),
-      gameBottles: [],
-      selectedFrom: null,
+      configRows: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      gameItems: [],
+      selectedIndex: null,
       step: 0,
       won: false,
       log: []
     };
 
-    const el = {
+    const dom = {
       stageText: document.getElementById('stageText'),
-      playBtn: document.getElementById('playBtn'),
-      backBtn: document.getElementById('backBtn'),
-      resetBtn: document.getElementById('resetBtn'),
-      prepScreen: document.getElementById('prepScreen'),
-      prepBody: document.getElementById('prepBody'),
-      prepStatus: document.getElementById('prepStatus'),
-      addRowBtn: document.getElementById('addRowBtn'),
-      gameLayout: document.getElementById('gameLayout'),
-      bottles: document.getElementById('bottles'),
-      gameStatus: document.getElementById('gameStatus'),
-      winOverlay: document.getElementById('winOverlay'),
-      log: document.getElementById('log'),
-      copyLogBtn: document.getElementById('copyLogBtn')
+      startGameBtn: document.getElementById('startGameBtn'),
+      backToPrepBtn: document.getElementById('backToPrepBtn'),
+      resetGameBtn: document.getElementById('resetGameBtn'),
+      preparationScreen: document.getElementById('preparationScreen'),
+      preparationTableBody: document.getElementById('preparationTableBody'),
+      preparationStatusText: document.getElementById('preparationStatusText'),
+      addPreparationRowBtn: document.getElementById('addPreparationRowBtn'),
+      gameAndLogScreen: document.getElementById('gameAndLogScreen'),
+      gameStatusText: document.getElementById('gameStatusText'),
+      gameItemsGrid: document.getElementById('gameItemsGrid'),
+      resultOverlay: document.getElementById('resultOverlay'),
+      copyLogBtn: document.getElementById('copyLogBtn'),
+      logList: document.getElementById('logList')
     };
 
-    function bottleName(i) {
-      return `Бутылка ${i + 1}`;
+    function itemName(index) {
+      return `Бутылка ${index + 1}`;
     }
 
-    function setPrepStatus(text) {
-      el.prepStatus.textContent = text;
+    function setPreparationStatus(text) {
+      dom.preparationStatusText.textContent = text;
     }
 
     function setGameStatus(text) {
-      el.gameStatus.textContent = text;
+      dom.gameStatusText.textContent = text;
     }
 
-    function addLog(text) {
-      state.log.push(text);
+    function addLog(message) {
+      state.log.push(message);
       renderLog();
     }
 
     function renderLog() {
-      el.log.innerHTML = '';
+      dom.logList.innerHTML = '';
       state.log.forEach((line) => {
-        const item = document.createElement('div');
-        item.className = 'log-item';
-        item.textContent = line;
-        el.log.appendChild(item);
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.textContent = line;
+        dom.logList.appendChild(row);
       });
-      el.log.scrollTop = el.log.scrollHeight;
+      dom.logList.scrollTop = dom.logList.scrollHeight;
     }
 
-    function renderPrepTable() {
-      el.prepBody.innerHTML = '';
-      state.rows.forEach((row, i) => {
-        const tr = document.createElement('tr');
+    function renderPreparationTable() {
+      dom.preparationTableBody.innerHTML = '';
 
-        const capacityVal = Number.isFinite(row.capacity) ? row.capacity : 0;
-        const filledVal = Number.isFinite(row.filled) ? row.filled : 0;
-        const winVal = row.win == null ? '' : row.win;
+      state.configRows.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        const targetValue = row.target == null ? '' : row.target;
 
         tr.innerHTML = `
-          <td><input type="number" min="1" value="${capacityVal}" data-field="capacity" data-i="${i}" /></td>
-          <td><input type="number" min="0" value="${filledVal}" data-field="filled" data-i="${i}" /></td>
-          <td><input type="number" min="0" value="${winVal}" placeholder="-" data-field="win" data-i="${i}" /></td>
-          <td><button data-remove="${i}" class="danger">Удалить</button></td>
+          <td><input type="number" min="1" value="${row.valueA}" data-kind="valueA" data-index="${index}" /></td>
+          <td><input type="number" min="0" value="${row.valueB}" data-kind="valueB" data-index="${index}" /></td>
+          <td><input type="number" min="0" value="${targetValue}" placeholder="-" data-kind="target" data-index="${index}" /></td>
+          <td><button class="btn-danger" data-remove-index="${index}">Удалить</button></td>
         `;
 
-        el.prepBody.appendChild(tr);
+        dom.preparationTableBody.appendChild(tr);
       });
 
-      el.prepBody.querySelectorAll('input').forEach((input) => {
-        input.addEventListener('input', (e) => {
-          const i = Number(e.target.dataset.i);
-          const field = e.target.dataset.field;
-          const raw = e.target.value;
+      dom.preparationTableBody.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('input', (event) => {
+          const idx = Number(event.target.dataset.index);
+          const kind = event.target.dataset.kind;
+          const raw = event.target.value;
 
-          if (field === 'win' && raw === '') {
-            state.rows[i].win = null;
+          if (kind === 'target' && raw === '') {
+            state.configRows[idx].target = null;
             return;
           }
 
-          const n = Number(raw);
-          if (!Number.isFinite(n)) return;
+          const value = Number(raw);
+          if (!Number.isFinite(value)) return;
 
-          if (field === 'capacity') {
-            state.rows[i].capacity = Math.max(1, Math.floor(n));
-          } else if (field === 'filled') {
-            state.rows[i].filled = Math.max(0, Math.floor(n));
+          if (kind === 'valueA') {
+            state.configRows[idx].valueA = Math.max(1, Math.floor(value));
+          } else if (kind === 'valueB') {
+            state.configRows[idx].valueB = Math.max(0, Math.floor(value));
           } else {
-            state.rows[i].win = Math.max(0, Math.floor(n));
+            state.configRows[idx].target = Math.max(0, Math.floor(value));
           }
         });
       });
 
-      el.prepBody.querySelectorAll('[data-remove]').forEach((btn) => {
+      dom.preparationTableBody.querySelectorAll('[data-remove-index]').forEach((btn) => {
         btn.addEventListener('click', () => {
-          if (state.rows.length <= 1) {
-            setPrepStatus('Должна остаться хотя бы одна бутылка.');
+          if (state.configRows.length <= 1) {
+            setPreparationStatus('Должна остаться хотя бы одна бутылка.');
             return;
           }
-          const i = Number(btn.dataset.remove);
-          state.rows.splice(i, 1);
-          setPrepStatus('Бутылка удалена.');
-          renderPrepTable();
+          const idx = Number(btn.dataset.removeIndex);
+          state.configRows.splice(idx, 1);
+          setPreparationStatus('Бутылка удалена.');
+          renderPreparationTable();
         });
+      });
+    }
+
+    function renderGameItems() {
+      dom.gameItemsGrid.innerHTML = '';
+      state.gameItems.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        if (state.selectedIndex === index) card.classList.add('is-selected');
+
+        const fillPercent = item.capacity === 0 ? 0 : (item.volume / item.capacity) * 100;
+
+        card.innerHTML = `
+          <div class="item-head">
+            <strong>${itemName(index)}</strong>
+            <span>${item.volume}/${item.capacity} л</span>
+          </div>
+          <div class="item-meter">
+            <div class="item-meter-fill" style="height:${fillPercent}%"></div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => handleGameItemClick(index));
+        dom.gameItemsGrid.appendChild(card);
       });
     }
 
     function validatePreparation() {
-      if (state.rows.length === 0) {
+      if (state.configRows.length === 0) {
         return { ok: false, message: 'Добавьте хотя бы одну бутылку.' };
       }
 
-      let hasWin = false;
-      for (let i = 0; i < state.rows.length; i += 1) {
-        const row = state.rows[i];
-        if (!Number.isInteger(row.capacity) || row.capacity <= 0) {
+      let hasTarget = false;
+
+      for (let i = 0; i < state.configRows.length; i += 1) {
+        const row = state.configRows[i];
+
+        if (!Number.isInteger(row.valueA) || row.valueA <= 0) {
           return { ok: false, message: `Строка ${i + 1}: литраж должен быть больше 0.` };
         }
-        if (!Number.isInteger(row.filled) || row.filled < 0 || row.filled > row.capacity) {
+
+        if (!Number.isInteger(row.valueB) || row.valueB < 0 || row.valueB > row.valueA) {
           return { ok: false, message: `Строка ${i + 1}: "Налито" должно быть от 0 до литража.` };
         }
-        if (row.win != null) {
-          if (!Number.isInteger(row.win) || row.win < 0 || row.win > row.capacity) {
+
+        if (row.target != null) {
+          if (!Number.isInteger(row.target) || row.target < 0 || row.target > row.valueA) {
             return { ok: false, message: `Строка ${i + 1}: "Победа" должна быть от 0 до литража.` };
           }
-          hasWin = true;
+          hasTarget = true;
         }
       }
 
-      if (!hasWin) {
+      if (!hasTarget) {
         return { ok: false, message: 'Задайте хотя бы одну цель в колонке "Победа".' };
       }
 
       return { ok: true, message: '' };
     }
 
-    function collectPreparationSummary() {
-      const lines = state.rows.map((r, i) => {
-        const goal = r.win == null ? '-' : `${r.win}л`;
-        return `${i + 1}) ${r.capacity}л, налито ${r.filled}л, победа ${goal}`;
-      });
-      return lines.join('; ');
+    function buildPreparationSummary() {
+      return state.configRows
+        .map((row, index) => `${index + 1}) ${row.valueA}л, налито ${row.valueB}л, победа ${row.target == null ? '-' : `${row.target}л`}`)
+        .join('; ');
     }
 
-    function renderGameBottles() {
-      el.bottles.innerHTML = '';
-      state.gameBottles.forEach((b, i) => {
-        const card = document.createElement('div');
-        card.className = 'bottle';
-        if (state.selectedFrom === i) card.classList.add('selected');
-        const h = b.capacity === 0 ? 0 : (b.volume / b.capacity) * 100;
+    function checkWinCondition() {
+      const targets = state.configRows
+        .map((row, index) => ({ index, target: row.target }))
+        .filter((x) => x.target != null);
 
-        card.innerHTML = `
-          <div class="b-top">
-            <strong>${bottleName(i)}</strong>
-            <span>${b.volume}/${b.capacity} л</span>
-          </div>
-          <div class="meter"><div class="water" style="height:${h}%"></div></div>
-        `;
+      const isWin = targets.every((x) => state.gameItems[x.index] && state.gameItems[x.index].volume === x.target);
 
-        card.addEventListener('click', () => handleBottleClick(i));
-        el.bottles.appendChild(card);
-      });
-    }
-
-    function checkWin() {
-      const targets = state.rows
-        .map((r, i) => ({ i, win: r.win }))
-        .filter((x) => x.win != null);
-
-      const allMatch = targets.every((t) => state.gameBottles[t.i] && state.gameBottles[t.i].volume === t.win);
-      if (allMatch) {
+      if (isWin) {
         state.won = true;
         state.stage = 'Результаты';
-        el.stageText.textContent = state.stage;
-        el.winOverlay.classList.remove('hidden');
-        el.copyLogBtn.classList.remove('hidden');
+        dom.stageText.textContent = state.stage;
+        dom.resultOverlay.classList.remove('is-hidden');
+        dom.copyLogBtn.classList.remove('is-hidden');
         addLog('Победа: цель достигнута.');
         setGameStatus('Игра завершена победой.');
       }
     }
 
-    function handleBottleClick(i) {
+    function handleGameItemClick(index) {
       if (state.stage !== 'Игра' || state.won) return;
 
-      if (state.selectedFrom == null) {
-        if (state.gameBottles[i].volume === 0) {
+      if (state.selectedIndex == null) {
+        if (state.gameItems[index].volume === 0) {
           setGameStatus('Источник пуст. Выберите другую бутылку.');
           return;
         }
-        state.selectedFrom = i;
-        setGameStatus(`${bottleName(i)} выбрана как источник.`);
-        renderGameBottles();
+        state.selectedIndex = index;
+        setGameStatus(`${itemName(index)} выбрана как источник.`);
+        renderGameItems();
         return;
       }
 
-      const from = state.selectedFrom;
-      const to = i;
-      state.selectedFrom = null;
+      const from = state.selectedIndex;
+      const to = index;
+      state.selectedIndex = null;
 
       if (from === to) {
         setGameStatus('Нельзя переливать в ту же бутылку.');
-        renderGameBottles();
+        renderGameItems();
         return;
       }
 
-      const src = state.gameBottles[from];
-      const dst = state.gameBottles[to];
-      const free = dst.capacity - dst.volume;
-      const amount = Math.min(src.volume, free);
+      const src = state.gameItems[from];
+      const dst = state.gameItems[to];
+      const amount = Math.min(src.volume, dst.capacity - dst.volume);
 
       if (amount <= 0) {
         setGameStatus('Переливание невозможно: нет места или нет воды.');
-        renderGameBottles();
+        renderGameItems();
         return;
       }
 
       src.volume -= amount;
       dst.volume += amount;
       state.step += 1;
-      addLog(`Шаг ${state.step}: ${amount} л из ${bottleName(from)} в ${bottleName(to)}.`);
+      addLog(`Шаг ${state.step}: ${amount} л из ${itemName(from)} в ${itemName(to)}.`);
       setGameStatus(`Перелито ${amount} л.`);
-      renderGameBottles();
-      checkWin();
+      renderGameItems();
+      checkWinCondition();
     }
 
-    function toGame() {
+    function switchToGameScreen() {
       const check = validatePreparation();
       if (!check.ok) {
-        setPrepStatus(check.message);
+        setPreparationStatus(check.message);
         return;
       }
 
-      state.gameBottles = state.rows.map((r) => ({ capacity: r.capacity, volume: r.filled }));
-      state.selectedFrom = null;
+      state.gameItems = state.configRows.map((row) => ({ capacity: row.valueA, volume: row.valueB }));
+      state.stage = 'Игра';
+      state.selectedIndex = null;
       state.step = 0;
       state.won = false;
-      state.stage = 'Игра';
       state.log = [];
 
-      el.stageText.textContent = state.stage;
-      el.prepScreen.classList.add('hidden');
-      el.gameLayout.classList.remove('hidden');
-      el.backBtn.classList.remove('hidden');
-      el.playBtn.classList.add('hidden');
-      el.winOverlay.classList.add('hidden');
-      el.copyLogBtn.classList.add('hidden');
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.add('is-hidden');
+      dom.gameAndLogScreen.classList.remove('is-hidden');
+      dom.backToPrepBtn.classList.remove('is-hidden');
+      dom.startGameBtn.classList.add('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
 
-      const prepSummary = collectPreparationSummary();
-      addLog(`Подготовка для игры: ${prepSummary}.`);
-      addLog(`Игра началась. Начальные объемы: [${state.gameBottles.map((b) => b.volume).join(', ')}].`);
+      addLog(`Подготовка для игры: ${buildPreparationSummary()}.`);
+      addLog(`Игра началась. Начальные объемы: [${state.gameItems.map((x) => x.volume).join(', ')}].`);
 
+      setPreparationStatus('');
       setGameStatus('Выберите бутылку-источник, затем бутылку-приемник.');
-      setPrepStatus('');
-      renderGameBottles();
-      checkWin();
+      renderGameItems();
+      checkWinCondition();
     }
 
-    function toPreparation() {
+    function switchToPreparationScreen() {
       state.stage = 'Подготовка';
-      el.stageText.textContent = state.stage;
-      el.prepScreen.classList.remove('hidden');
-      el.gameLayout.classList.add('hidden');
-      el.backBtn.classList.add('hidden');
-      el.playBtn.classList.remove('hidden');
-      state.selectedFrom = null;
+      state.selectedIndex = null;
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      dom.backToPrepBtn.classList.add('is-hidden');
+      dom.startGameBtn.classList.remove('is-hidden');
+
       setGameStatus('');
-      renderPrepTable();
+      renderPreparationTable();
     }
 
     function resetAll() {
       state.stage = 'Подготовка';
-      state.rows = JSON.parse(JSON.stringify(defaultRows));
-      state.gameBottles = [];
-      state.selectedFrom = null;
+      state.configRows = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      state.gameItems = [];
+      state.selectedIndex = null;
       state.step = 0;
       state.won = false;
       state.log = [];
-      el.stageText.textContent = state.stage;
-      el.prepScreen.classList.remove('hidden');
-      el.gameLayout.classList.add('hidden');
-      el.backBtn.classList.add('hidden');
-      el.playBtn.classList.remove('hidden');
-      el.copyLogBtn.classList.add('hidden');
-      setPrepStatus('');
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      dom.backToPrepBtn.classList.add('is-hidden');
+      dom.startGameBtn.classList.remove('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+
+      setPreparationStatus('');
       setGameStatus('');
-      renderPrepTable();
+      renderPreparationTable();
       renderLog();
-      el.bottles.innerHTML = '';
+      dom.gameItemsGrid.innerHTML = '';
     }
 
-    async function copyLog() {
+    async function copyLogToClipboard() {
       const text = state.log.join('\n');
       if (!text) return;
 
@@ -588,21 +603,21 @@
           temp.remove();
         }
         setGameStatus('Лог скопирован в буфер обмена.');
-      } catch (e) {
+      } catch (_err) {
         setGameStatus('Не удалось скопировать лог.');
       }
     }
 
-    el.addRowBtn.addEventListener('click', () => {
-      state.rows.push({ capacity: 5, filled: 0, win: null });
-      setPrepStatus('Добавлена новая строка.');
-      renderPrepTable();
-    });
+    dom.startGameBtn.addEventListener('click', switchToGameScreen);
+    dom.backToPrepBtn.addEventListener('click', switchToPreparationScreen);
+    dom.resetGameBtn.addEventListener('click', resetAll);
+    dom.copyLogBtn.addEventListener('click', copyLogToClipboard);
 
-    el.playBtn.addEventListener('click', toGame);
-    el.backBtn.addEventListener('click', toPreparation);
-    el.resetBtn.addEventListener('click', resetAll);
-    el.copyLogBtn.addEventListener('click', copyLog);
+    dom.addPreparationRowBtn.addEventListener('click', () => {
+      state.configRows.push({ valueA: 5, valueB: 0, target: null });
+      setPreparationStatus('Добавлена бутылка.');
+      renderPreparationTable();
+    });
 
     resetAll();
   </script>
