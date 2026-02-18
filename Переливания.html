@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Переливание</title>
+  <style>
+    :root {
+      --bg: #eef3fb;
+      --card: #ffffff;
+      --line: #d4deec;
+      --text: #1c2734;
+      --muted: #617084;
+      --primary: #2b6ee7;
+      --primary-soft: #eaf2ff;
+      --danger: #c73939;
+      --success: #13864b;
+      --shadow: 0 10px 28px rgba(21, 36, 58, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #dfeeff 0%, transparent 40%), var(--bg);
+      padding: 16px;
+    }
+
+    .app {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .top {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h1 { margin: 0; font-size: 1.35rem; }
+
+    .stage {
+      background: var(--primary-soft);
+      border: 1px solid #c4d8ff;
+      color: #164ca7;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .primary { background: var(--primary-soft); border-color: #b9cefa; color: #164ca7; }
+    .danger { background: #fff0f0; border-color: #f3c6c6; color: #a11f1f; }
+    .success { background: #ebfff2; border-color: #bfeccc; color: #146a3f; }
+
+    .layout {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 320px;
+    }
+
+    .hidden { display: none !important; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    th { color: var(--muted); font-weight: 600; }
+
+    input[type="number"] {
+      width: 100px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hint { margin: 10px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+    .game-wrap {
+      position: relative;
+      min-height: 380px;
+    }
+
+    .bottles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .bottle {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bottle.selected { outline: 2px solid var(--primary); }
+
+    .b-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.87rem;
+      margin-bottom: 8px;
+    }
+
+    .meter {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      height: 140px;
+      background: #f1f6fd;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .water {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, #86d7ff, #3f87f0);
+      transition: height .2s ease;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(13, 37, 19, 0.55);
+      border-radius: 14px;
+      color: #fff;
+      font-size: clamp(2rem, 9vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .log-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log {
+      margin-top: 10px;
+      max-height: 64vh;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .log-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 0.88rem;
+      background: #fbfdff;
+    }
+
+    .status {
+      margin: 8px 0 0;
+      color: var(--muted);
+      min-height: 22px;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .log { max-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel top">
+      <h1>Игра «Переливания»</h1>
+      <div class="row">
+        <span class="stage">Этап: <span id="stageText">Подготовка</span></span>
+        <button id="playBtn" class="primary">Игра</button>
+        <button id="backBtn" class="danger hidden">Назад в подготовку</button>
+        <button id="resetBtn">Сброс</button>
+      </div>
+    </section>
+
+    <section id="prepScreen" class="panel">
+      <h2>Подготовка</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Литраж</th>
+            <th>Налито</th>
+            <th>Победа</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="prepBody"></tbody>
+      </table>
+      <div class="table-actions">
+        <button id="addRowBtn" class="primary">Добавить бутылку</button>
+        <p class="hint">В колонке «Победа» укажите нужный объем для нужной бутылки. Достаточно задать хотя бы одну цель.</p>
+      </div>
+      <p id="prepStatus" class="status"></p>
+    </section>
+
+    <section id="gameLayout" class="layout hidden">
+      <section class="panel game-wrap">
+        <h2>Игра</h2>
+        <p class="hint">Кликните по бутылке-источнику, затем по бутылке-приемнику.</p>
+        <div id="gameStatus" class="status"></div>
+        <div id="bottles" class="bottles"></div>
+        <div id="winOverlay" class="overlay hidden">Победа</div>
+      </section>
+
+      <aside class="panel">
+        <div class="log-head">
+          <h2 style="margin:0">Лог</h2>
+          <button id="copyLogBtn" class="success hidden">Скопировать лог</button>
+        </div>
+        <div id="log" class="log"></div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const defaultRows = [
+      { capacity: 8, filled: 0, win: null },
+      { capacity: 5, filled: 0, win: 4 },
+      { capacity: 3, filled: 0, win: null }
+    ];
+
+    const state = {
+      stage: 'Подготовка',
+      rows: JSON.parse(JSON.stringify(defaultRows)),
+      gameBottles: [],
+      selectedFrom: null,
+      step: 0,
+      won: false,
+      log: []
+    };
+
+    const el = {
+      stageText: document.getElementById('stageText'),
+      playBtn: document.getElementById('playBtn'),
+      backBtn: document.getElementById('backBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      prepScreen: document.getElementById('prepScreen'),
+      prepBody: document.getElementById('prepBody'),
+      prepStatus: document.getElementById('prepStatus'),
+      addRowBtn: document.getElementById('addRowBtn'),
+      gameLayout: document.getElementById('gameLayout'),
+      bottles: document.getElementById('bottles'),
+      gameStatus: document.getElementById('gameStatus'),
+      winOverlay: document.getElementById('winOverlay'),
+      log: document.getElementById('log'),
+      copyLogBtn: document.getElementById('copyLogBtn')
+    };
+
+    function bottleName(i) {
+      return `Бутылка ${i + 1}`;
+    }
+
+    function setPrepStatus(text) {
+      el.prepStatus.textContent = text;
+    }
+
+    function setGameStatus(text) {
+      el.gameStatus.textContent = text;
+    }
+
+    function addLog(text) {
+      state.log.push(text);
+      renderLog();
+    }
+
+    function renderLog() {
+      el.log.innerHTML = '';
+      state.log.forEach((line) => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.textContent = line;
+        el.log.appendChild(item);
+      });
+      el.log.scrollTop = el.log.scrollHeight;
+    }
+
+    function renderPrepTable() {
+      el.prepBody.innerHTML = '';
+      state.rows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+
+        const capacityVal = Number.isFinite(row.capacity) ? row.capacity : 0;
+        const filledVal = Number.isFinite(row.filled) ? row.filled : 0;
+        const winVal = row.win == null ? '' : row.win;
+
+        tr.innerHTML = `
+          <td><input type="number" min="1" value="${capacityVal}" data-field="capacity" data-i="${i}" /></td>
+          <td><input type="number" min="0" value="${filledVal}" data-field="filled" data-i="${i}" /></td>
+          <td><input type="number" min="0" value="${winVal}" placeholder="-" data-field="win" data-i="${i}" /></td>
+          <td><button data-remove="${i}" class="danger">Удалить</button></td>
+        `;
+
+        el.prepBody.appendChild(tr);
+      });
+
+      el.prepBody.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('input', (e) => {
+          const i = Number(e.target.dataset.i);
+          const field = e.target.dataset.field;
+          const raw = e.target.value;
+
+          if (field === 'win' && raw === '') {
+            state.rows[i].win = null;
+            return;
+          }
+
+          const n = Number(raw);
+          if (!Number.isFinite(n)) return;
+
+          if (field === 'capacity') {
+            state.rows[i].capacity = Math.max(1, Math.floor(n));
+          } else if (field === 'filled') {
+            state.rows[i].filled = Math.max(0, Math.floor(n));
+          } else {
+            state.rows[i].win = Math.max(0, Math.floor(n));
+          }
+        });
+      });
+
+      el.prepBody.querySelectorAll('[data-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (state.rows.length <= 1) {
+            setPrepStatus('Должна остаться хотя бы одна бутылка.');
+            return;
+          }
+          const i = Number(btn.dataset.remove);
+          state.rows.splice(i, 1);
+          setPrepStatus('Бутылка удалена.');
+          renderPrepTable();
+        });
+      });
+    }
+
+    function validatePreparation() {
+      if (state.rows.length === 0) {
+        return { ok: false, message: 'Добавьте хотя бы одну бутылку.' };
+      }
+
+      let hasWin = false;
+      for (let i = 0; i < state.rows.length; i += 1) {
+        const row = state.rows[i];
+        if (!Number.isInteger(row.capacity) || row.capacity <= 0) {
+          return { ok: false, message: `Строка ${i + 1}: литраж должен быть больше 0.` };
+        }
+        if (!Number.isInteger(row.filled) || row.filled < 0 || row.filled > row.capacity) {
+          return { ok: false, message: `Строка ${i + 1}: "Налито" должно быть от 0 до литража.` };
+        }
+        if (row.win != null) {
+          if (!Number.isInteger(row.win) || row.win < 0 || row.win > row.capacity) {
+            return { ok: false, message: `Строка ${i + 1}: "Победа" должна быть от 0 до литража.` };
+          }
+          hasWin = true;
+        }
+      }
+
+      if (!hasWin) {
+        return { ok: false, message: 'Задайте хотя бы одну цель в колонке "Победа".' };
+      }
+
+      return { ok: true, message: '' };
+    }
+
+    function collectPreparationSummary() {
+      const lines = state.rows.map((r, i) => {
+        const goal = r.win == null ? '-' : `${r.win}л`;
+        return `${i + 1}) ${r.capacity}л, налито ${r.filled}л, победа ${goal}`;
+      });
+      return lines.join('; ');
+    }
+
+    function renderGameBottles() {
+      el.bottles.innerHTML = '';
+      state.gameBottles.forEach((b, i) => {
+        const card = document.createElement('div');
+        card.className = 'bottle';
+        if (state.selectedFrom === i) card.classList.add('selected');
+        const h = b.capacity === 0 ? 0 : (b.volume / b.capacity) * 100;
+
+        card.innerHTML = `
+          <div class="b-top">
+            <strong>${bottleName(i)}</strong>
+            <span>${b.volume}/${b.capacity} л</span>
+          </div>
+          <div class="meter"><div class="water" style="height:${h}%"></div></div>
+        `;
+
+        card.addEventListener('click', () => handleBottleClick(i));
+        el.bottles.appendChild(card);
+      });
+    }
+
+    function checkWin() {
+      const targets = state.rows
+        .map((r, i) => ({ i, win: r.win }))
+        .filter((x) => x.win != null);
+
+      const allMatch = targets.every((t) => state.gameBottles[t.i] && state.gameBottles[t.i].volume === t.win);
+      if (allMatch) {
+        state.won = true;
+        state.stage = 'Результаты';
+        el.stageText.textContent = state.stage;
+        el.winOverlay.classList.remove('hidden');
+        el.copyLogBtn.classList.remove('hidden');
+        addLog('Победа: цель достигнута.');
+        setGameStatus('Игра завершена победой.');
+      }
+    }
+
+    function handleBottleClick(i) {
+      if (state.stage !== 'Игра' || state.won) return;
+
+      if (state.selectedFrom == null) {
+        if (state.gameBottles[i].volume === 0) {
+          setGameStatus('Источник пуст. Выберите другую бутылку.');
+          return;
+        }
+        state.selectedFrom = i;
+        setGameStatus(`${bottleName(i)} выбрана как источник.`);
+        renderGameBottles();
+        return;
+      }
+
+      const from = state.selectedFrom;
+      const to = i;
+      state.selectedFrom = null;
+
+      if (from === to) {
+        setGameStatus('Нельзя переливать в ту же бутылку.');
+        renderGameBottles();
+        return;
+      }
+
+      const src = state.gameBottles[from];
+      const dst = state.gameBottles[to];
+      const free = dst.capacity - dst.volume;
+      const amount = Math.min(src.volume, free);
+
+      if (amount <= 0) {
+        setGameStatus('Переливание невозможно: нет места или нет воды.');
+        renderGameBottles();
+        return;
+      }
+
+      src.volume -= amount;
+      dst.volume += amount;
+      state.step += 1;
+      addLog(`Шаг ${state.step}: ${amount} л из ${bottleName(from)} в ${bottleName(to)}.`);
+      setGameStatus(`Перелито ${amount} л.`);
+      renderGameBottles();
+      checkWin();
+    }
+
+    function toGame() {
+      const check = validatePreparation();
+      if (!check.ok) {
+        setPrepStatus(check.message);
+        return;
+      }
+
+      state.gameBottles = state.rows.map((r) => ({ capacity: r.capacity, volume: r.filled }));
+      state.selectedFrom = null;
+      state.step = 0;
+      state.won = false;
+      state.stage = 'Игра';
+      state.log = [];
+
+      el.stageText.textContent = state.stage;
+      el.prepScreen.classList.add('hidden');
+      el.gameLayout.classList.remove('hidden');
+      el.backBtn.classList.remove('hidden');
+      el.playBtn.classList.add('hidden');
+      el.winOverlay.classList.add('hidden');
+      el.copyLogBtn.classList.add('hidden');
+
+      const prepSummary = collectPreparationSummary();
+      addLog(`Подготовка для игры: ${prepSummary}.`);
+      addLog(`Игра началась. Начальные объемы: [${state.gameBottles.map((b) => b.volume).join(', ')}].`);
+
+      setGameStatus('Выберите бутылку-источник, затем бутылку-приемник.');
+      setPrepStatus('');
+      renderGameBottles();
+      checkWin();
+    }
+
+    function toPreparation() {
+      state.stage = 'Подготовка';
+      el.stageText.textContent = state.stage;
+      el.prepScreen.classList.remove('hidden');
+      el.gameLayout.classList.add('hidden');
+      el.backBtn.classList.add('hidden');
+      el.playBtn.classList.remove('hidden');
+      state.selectedFrom = null;
+      setGameStatus('');
+      renderPrepTable();
+    }
+
+    function resetAll() {
+      state.stage = 'Подготовка';
+      state.rows = JSON.parse(JSON.stringify(defaultRows));
+      state.gameBottles = [];
+      state.selectedFrom = null;
+      state.step = 0;
+      state.won = false;
+      state.log = [];
+      el.stageText.textContent = state.stage;
+      el.prepScreen.classList.remove('hidden');
+      el.gameLayout.classList.add('hidden');
+      el.backBtn.classList.add('hidden');
+      el.playBtn.classList.remove('hidden');
+      el.copyLogBtn.classList.add('hidden');
+      setPrepStatus('');
+      setGameStatus('');
+      renderPrepTable();
+      renderLog();
+      el.bottles.innerHTML = '';
+    }
+
+    async function copyLog() {
+      const text = state.log.join('\n');
+      if (!text) return;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          temp.remove();
+        }
+        setGameStatus('Лог скопирован в буфер обмена.');
+      } catch (e) {
+        setGameStatus('Не удалось скопировать лог.');
+      }
+    }
+
+    el.addRowBtn.addEventListener('click', () => {
+      state.rows.push({ capacity: 5, filled: 0, win: null });
+      setPrepStatus('Добавлена новая строка.');
+      renderPrepTable();
+    });
+
+    el.playBtn.addEventListener('click', toGame);
+    el.backBtn.addEventListener('click', toPreparation);
+    el.resetBtn.addEventListener('click', resetAll);
+    el.copyLogBtn.addEventListener('click', copyLog);
+
+    resetAll();
+  </script>
+</body>
+</html>
