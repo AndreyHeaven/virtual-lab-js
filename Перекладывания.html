@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Перекладывания (Ханой)</title>
+  <style>
+    :root {
+      --bg: #eef3fb;
+      --card: #ffffff;
+      --line: #d4deec;
+      --text: #1c2734;
+      --muted: #617084;
+      --primary: #2b6ee7;
+      --primary-soft: #eaf2ff;
+      --danger: #c73939;
+      --success: #13864b;
+      --shadow: 0 10px 28px rgba(21, 36, 58, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #dfeeff 0%, transparent 40%), var(--bg);
+      padding: 16px;
+    }
+
+    .app-shell {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .app-header {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .stage-badge {
+      background: var(--primary-soft);
+      border: 1px solid #c4d8ff;
+      color: #164ca7;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .app-title { margin: 0; font-size: 1.35rem; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary-soft); border-color: #b9cefa; color: #164ca7; }
+    .btn-danger { background: #fff0f0; border-color: #f3c6c6; color: #a11f1f; }
+    .btn-success { background: #ebfff2; border-color: #bfeccc; color: #146a3f; }
+
+    .is-hidden { display: none !important; }
+
+    .game-layout {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 320px;
+    }
+
+    .hint-text {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status-text {
+      margin: 8px 0 0;
+      color: var(--muted);
+      min-height: 22px;
+      font-size: 0.92rem;
+    }
+
+    .config-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 10px;
+    }
+
+    .config-table th,
+    .config-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    .config-table th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input[type="number"] {
+      width: 110px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .prep-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .game-board {
+      position: relative;
+      min-height: 420px;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .item-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-card.is-selected { outline: 2px solid var(--primary); }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.87rem;
+      margin-bottom: 8px;
+    }
+
+    .tower {
+      height: 280px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f5f8fe;
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      padding: 8px;
+      overflow: hidden;
+    }
+
+    .tower::before {
+      content: "";
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      height: 8px;
+      border-radius: 5px;
+      background: #d0dbec;
+    }
+
+    .tower::after {
+      content: "";
+      position: absolute;
+      bottom: 16px;
+      width: 10px;
+      top: 24px;
+      border-radius: 6px;
+      background: #c3d2ea;
+    }
+
+    .disks {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 16px;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .disk {
+      height: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: linear-gradient(180deg, #9ec6ff, #5c8feb);
+    }
+
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(13, 37, 19, 0.55);
+      border-radius: 14px;
+      color: #fff;
+      font-size: clamp(2rem, 9vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-list {
+      margin-top: 10px;
+      max-height: 64vh;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .log-row {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 0.88rem;
+      background: #fbfdff;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout { grid-template-columns: 1fr; }
+      .log-list { max-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="panel app-header">
+      <h1 class="app-title">Игра «Перекладывания»</h1>
+      <div class="header-actions">
+        <span class="stage-badge">Этап: <span id="stageText">Подготовка</span></span>
+        <button id="startGameBtn" class="btn-primary">Игра</button>
+        <button id="backToPrepBtn" class="btn-danger is-hidden">Назад в подготовку</button>
+        <button id="resetGameBtn">Сброс</button>
+      </div>
+    </header>
+
+    <section id="preparationScreen" class="panel">
+      <h2>Подготовка</h2>
+      <table class="config-table">
+        <thead>
+          <tr>
+            <th>Вместимость столба</th>
+            <th>Старт (дисков)</th>
+            <th>Победа (дисков)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="preparationTableBody"></tbody>
+      </table>
+      <div class="prep-actions">
+        <button id="addPreparationRowBtn" class="btn-primary">Добавить столб</button>
+        <p class="hint-text">Сумма «Старт» и сумма «Победа» должны совпадать. Больше диск на меньший ставить нельзя.</p>
+      </div>
+      <p id="preparationStatusText" class="status-text"></p>
+    </section>
+
+    <section id="gameAndLogScreen" class="game-layout is-hidden">
+      <section class="panel game-board">
+        <h2>Игра</h2>
+        <p class="hint-text">Кликните по столбу-источнику, затем по столбу-приемнику.</p>
+        <p id="gameStatusText" class="status-text"></p>
+        <div id="gameItemsGrid" class="items-grid"></div>
+        <div id="resultOverlay" class="result-overlay is-hidden">Победа</div>
+      </section>
+
+      <aside class="panel">
+        <div class="log-header">
+          <h2 style="margin:0">Лог</h2>
+          <button id="copyLogBtn" class="btn-success is-hidden">Скопировать лог</button>
+        </div>
+        <div id="logList" class="log-list"></div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const DEFAULT_CONFIG = [
+      { capacity: 8, start: 3, target: 0 },
+      { capacity: 8, start: 0, target: 0 },
+      { capacity: 8, start: 0, target: 3 }
+    ];
+
+    const state = {
+      stage: 'Подготовка',
+      configRows: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      gameItems: [],
+      selectedIndex: null,
+      step: 0,
+      won: false,
+      log: []
+    };
+
+    const dom = {
+      stageText: document.getElementById('stageText'),
+      startGameBtn: document.getElementById('startGameBtn'),
+      backToPrepBtn: document.getElementById('backToPrepBtn'),
+      resetGameBtn: document.getElementById('resetGameBtn'),
+      preparationScreen: document.getElementById('preparationScreen'),
+      preparationTableBody: document.getElementById('preparationTableBody'),
+      preparationStatusText: document.getElementById('preparationStatusText'),
+      addPreparationRowBtn: document.getElementById('addPreparationRowBtn'),
+      gameAndLogScreen: document.getElementById('gameAndLogScreen'),
+      gameStatusText: document.getElementById('gameStatusText'),
+      gameItemsGrid: document.getElementById('gameItemsGrid'),
+      resultOverlay: document.getElementById('resultOverlay'),
+      copyLogBtn: document.getElementById('copyLogBtn'),
+      logList: document.getElementById('logList')
+    };
+
+    function towerName(index) {
+      return `Столб ${index + 1}`;
+    }
+
+    function setPreparationStatus(text) {
+      dom.preparationStatusText.textContent = text;
+    }
+
+    function setGameStatus(text) {
+      dom.gameStatusText.textContent = text;
+    }
+
+    function addLog(message) {
+      state.log.push(message);
+      renderLog();
+    }
+
+    function renderLog() {
+      dom.logList.innerHTML = '';
+      state.log.forEach((line) => {
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.textContent = line;
+        dom.logList.appendChild(row);
+      });
+      dom.logList.scrollTop = dom.logList.scrollHeight;
+    }
+
+    function renderPreparationTable() {
+      dom.preparationTableBody.innerHTML = '';
+
+      state.configRows.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="number" min="1" value="${row.capacity}" data-kind="capacity" data-index="${index}" /></td>
+          <td><input type="number" min="0" value="${row.start}" data-kind="start" data-index="${index}" /></td>
+          <td><input type="number" min="0" value="${row.target}" data-kind="target" data-index="${index}" /></td>
+          <td><button class="btn-danger" data-remove-index="${index}">Удалить</button></td>
+        `;
+        dom.preparationTableBody.appendChild(tr);
+      });
+
+      dom.preparationTableBody.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('input', (event) => {
+          const idx = Number(event.target.dataset.index);
+          const kind = event.target.dataset.kind;
+          const value = Math.max(0, Math.floor(Number(event.target.value || 0)));
+          if (kind === 'capacity') {
+            state.configRows[idx].capacity = Math.max(1, value);
+          } else if (kind === 'start') {
+            state.configRows[idx].start = value;
+          } else {
+            state.configRows[idx].target = value;
+          }
+        });
+      });
+
+      dom.preparationTableBody.querySelectorAll('[data-remove-index]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (state.configRows.length <= 2) {
+            setPreparationStatus('Для Ханойской башни нужно минимум 3 столба.');
+            return;
+          }
+          const idx = Number(btn.dataset.removeIndex);
+          state.configRows.splice(idx, 1);
+          setPreparationStatus('Столб удален.');
+          renderPreparationTable();
+        });
+      });
+    }
+
+    function validatePreparation() {
+      if (state.configRows.length < 3) {
+        return { ok: false, message: 'Нужно минимум 3 столба.' };
+      }
+
+      let startSum = 0;
+      let targetSum = 0;
+
+      for (let i = 0; i < state.configRows.length; i += 1) {
+        const row = state.configRows[i];
+        if (!Number.isInteger(row.capacity) || row.capacity <= 0) {
+          return { ok: false, message: `Строка ${i + 1}: вместимость должна быть больше 0.` };
+        }
+        if (!Number.isInteger(row.start) || row.start < 0 || row.start > row.capacity) {
+          return { ok: false, message: `Строка ${i + 1}: старт должен быть от 0 до вместимости.` };
+        }
+        if (!Number.isInteger(row.target) || row.target < 0 || row.target > row.capacity) {
+          return { ok: false, message: `Строка ${i + 1}: победа должна быть от 0 до вместимости.` };
+        }
+        startSum += row.start;
+        targetSum += row.target;
+      }
+
+      if (startSum <= 0) {
+        return { ok: false, message: 'Должен быть хотя бы один диск в старте.' };
+      }
+      if (startSum !== targetSum) {
+        return { ok: false, message: 'Сумма стартовых и целевых дисков должна совпадать.' };
+      }
+
+      return { ok: true, message: '' };
+    }
+
+    function buildPreparationSummary() {
+      return state.configRows
+        .map((row, index) => `${index + 1}) вмест. ${row.capacity}, старт ${row.start}, победа ${row.target}`)
+        .join('; ');
+    }
+
+    function buildInitialTowers() {
+      const totalDisks = state.configRows.reduce((sum, row) => sum + row.start, 0);
+      let diskSize = totalDisks;
+
+      state.gameItems = state.configRows.map((row) => {
+        const tower = [];
+        for (let i = 0; i < row.start; i += 1) {
+          tower.push(diskSize);
+          diskSize -= 1;
+        }
+        return {
+          capacity: row.capacity,
+          disks: tower
+        };
+      });
+    }
+
+    function diskWidth(size) {
+      const totalDisks = state.configRows.reduce((sum, row) => sum + row.start, 0);
+      if (totalDisks <= 1) return 90;
+      const ratio = (size - 1) / (totalDisks - 1);
+      return 36 + ratio * 56;
+    }
+
+    function renderGameItems() {
+      dom.gameItemsGrid.innerHTML = '';
+
+      state.gameItems.forEach((tower, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        if (state.selectedIndex === index) card.classList.add('is-selected');
+
+        const topDisk = tower.disks[tower.disks.length - 1];
+        const topText = topDisk ? `верхний диск: ${topDisk}` : 'пусто';
+
+        card.innerHTML = `
+          <div class="item-head">
+            <strong>${towerName(index)}</strong>
+            <span>${tower.disks.length}/${tower.capacity}, ${topText}</span>
+          </div>
+          <div class="tower"><div class="disks" id="towerDisks${index}"></div></div>
+        `;
+
+        const disksBox = card.querySelector(`#towerDisks${index}`);
+        tower.disks.forEach((size) => {
+          const disk = document.createElement('div');
+          disk.className = 'disk';
+          disk.style.width = `${diskWidth(size)}%`;
+          disk.title = `Диаметр ${size}`;
+          disksBox.appendChild(disk);
+        });
+
+        card.addEventListener('click', () => handleGameItemClick(index));
+        dom.gameItemsGrid.appendChild(card);
+      });
+    }
+
+    function checkWinCondition() {
+      const byCounts = state.gameItems.every(
+        (tower, index) => tower.disks.length === state.configRows[index].target
+      );
+
+      if (byCounts) {
+        state.won = true;
+        state.stage = 'Результаты';
+        dom.stageText.textContent = state.stage;
+        dom.resultOverlay.classList.remove('is-hidden');
+        dom.copyLogBtn.classList.remove('is-hidden');
+        addLog('Победа: целевая раскладка по столбам достигнута.');
+        setGameStatus('Игра завершена победой.');
+      }
+    }
+
+    function handleGameItemClick(index) {
+      if (state.stage !== 'Игра' || state.won) return;
+
+      if (state.selectedIndex == null) {
+        if (state.gameItems[index].disks.length === 0) {
+          setGameStatus('Источник пуст. Выберите другой столб.');
+          return;
+        }
+        state.selectedIndex = index;
+        setGameStatus(`${towerName(index)} выбран как источник.`);
+        renderGameItems();
+        return;
+      }
+
+      const from = state.selectedIndex;
+      const to = index;
+      state.selectedIndex = null;
+
+      if (from === to) {
+        setGameStatus('Нельзя перекладывать на тот же столб.');
+        renderGameItems();
+        return;
+      }
+
+      const source = state.gameItems[from];
+      const target = state.gameItems[to];
+
+      if (target.disks.length >= target.capacity) {
+        setGameStatus('Целевой столб заполнен.');
+        renderGameItems();
+        return;
+      }
+
+      const moving = source.disks[source.disks.length - 1];
+      const targetTop = target.disks[target.disks.length - 1];
+
+      if (targetTop && moving > targetTop) {
+        setGameStatus('Нельзя класть большой диск на меньший.');
+        renderGameItems();
+        return;
+      }
+
+      source.disks.pop();
+      target.disks.push(moving);
+      state.step += 1;
+
+      addLog(`Шаг ${state.step}: диск ${moving} с ${towerName(from)} на ${towerName(to)}.`);
+      setGameStatus(`Диск ${moving} перемещен.`);
+      renderGameItems();
+      checkWinCondition();
+    }
+
+    function switchToGameScreen() {
+      const check = validatePreparation();
+      if (!check.ok) {
+        setPreparationStatus(check.message);
+        return;
+      }
+
+      buildInitialTowers();
+      state.stage = 'Игра';
+      state.selectedIndex = null;
+      state.step = 0;
+      state.won = false;
+      state.log = [];
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.add('is-hidden');
+      dom.gameAndLogScreen.classList.remove('is-hidden');
+      dom.backToPrepBtn.classList.remove('is-hidden');
+      dom.startGameBtn.classList.add('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+
+      addLog(`Подготовка для игры: ${buildPreparationSummary()}.`);
+      addLog(`Игра началась. Начальная раскладка: [${state.gameItems.map((t) => t.disks.length).join(', ')}].`);
+
+      setPreparationStatus('');
+      setGameStatus('Выберите столб-источник, затем столб-приемник.');
+      renderGameItems();
+      checkWinCondition();
+    }
+
+    function switchToPreparationScreen() {
+      state.stage = 'Подготовка';
+      state.selectedIndex = null;
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      dom.backToPrepBtn.classList.add('is-hidden');
+      dom.startGameBtn.classList.remove('is-hidden');
+
+      setGameStatus('');
+      renderPreparationTable();
+    }
+
+    function resetAll() {
+      state.stage = 'Подготовка';
+      state.configRows = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      state.gameItems = [];
+      state.selectedIndex = null;
+      state.step = 0;
+      state.won = false;
+      state.log = [];
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      dom.backToPrepBtn.classList.add('is-hidden');
+      dom.startGameBtn.classList.remove('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+
+      setPreparationStatus('');
+      setGameStatus('');
+      renderPreparationTable();
+      renderLog();
+      dom.gameItemsGrid.innerHTML = '';
+    }
+
+    async function copyLogToClipboard() {
+      const text = state.log.join('\n');
+      if (!text) return;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          temp.remove();
+        }
+        setGameStatus('Лог скопирован в буфер обмена.');
+      } catch (_err) {
+        setGameStatus('Не удалось скопировать лог.');
+      }
+    }
+
+    dom.startGameBtn.addEventListener('click', switchToGameScreen);
+    dom.backToPrepBtn.addEventListener('click', switchToPreparationScreen);
+    dom.resetGameBtn.addEventListener('click', resetAll);
+    dom.copyLogBtn.addEventListener('click', copyLogToClipboard);
+
+    dom.addPreparationRowBtn.addEventListener('click', () => {
+      state.configRows.push({ capacity: 8, start: 0, target: 0 });
+      setPreparationStatus('Столб добавлен.');
+      renderPreparationTable();
+    });
+
+    resetAll();
+  </script>
+</body>
+</html>
