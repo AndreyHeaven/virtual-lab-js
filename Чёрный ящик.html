@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Чёрный ящик</title>
+  <style>
+    :root {
+      --bg: #eef3fb;
+      --card: #ffffff;
+      --line: #d4deec;
+      --text: #1c2734;
+      --muted: #617084;
+      --primary: #2b6ee7;
+      --primary-soft: #eaf2ff;
+      --danger: #c73939;
+      --success: #13864b;
+      --shadow: 0 10px 28px rgba(21, 36, 58, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #dfeeff 0%, transparent 40%), var(--bg);
+      padding: 16px;
+    }
+
+    .app-shell {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .app-header {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .stage-badge {
+      background: var(--primary-soft);
+      border: 1px solid #c4d8ff;
+      color: #164ca7;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .app-title { margin: 0; font-size: 1.35rem; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary-soft); border-color: #b9cefa; color: #164ca7; }
+    .btn-danger { background: #fff0f0; border-color: #f3c6c6; color: #a11f1f; }
+    .btn-success { background: #ebfff2; border-color: #bfeccc; color: #146a3f; }
+
+    .is-hidden { display: none !important; }
+
+    .game-layout {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 320px;
+    }
+
+    .hint-text {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status-text {
+      margin: 8px 0 0;
+      color: var(--muted);
+      min-height: 22px;
+      font-size: 0.92rem;
+    }
+
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .difficulty-tile {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      background: #fbfdff;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    .difficulty-tile:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(43, 110, 231, 0.12);
+    }
+
+    .difficulty-tile.is-selected {
+      border-color: #7da8f5;
+      background: var(--primary-soft);
+      box-shadow: 0 8px 18px rgba(43, 110, 231, 0.14);
+    }
+
+    .difficulty-tile-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .difficulty-mark {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.8rem;
+      color: #164ca7;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #c4d8ff;
+    }
+
+    .prep-start-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .game-board {
+      position: relative;
+      min-height: 380px;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .item-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      user-select: none;
+    }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.87rem;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .number-value {
+      font-size: clamp(2.3rem, 7vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1;
+      text-align: center;
+      margin: 12px 0;
+    }
+
+    .black-box-visual {
+      min-height: 168px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #2f3440, #0f1217);
+      color: #fff;
+      text-align: center;
+      padding: 14px;
+    }
+
+    .black-box-visual strong {
+      display: block;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .answer-controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .answer-controls select,
+    .answer-controls input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .answer-result {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #f5f8fe;
+      min-height: 70px;
+      font-size: 0.92rem;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .result-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(13, 37, 19, 0.55);
+      border-radius: 14px;
+      color: #fff;
+      font-size: clamp(2rem, 9vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .overlay-card {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .overlay-card button {
+      min-width: 180px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-list {
+      margin-top: 10px;
+      max-height: 64vh;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .log-row {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 0.88rem;
+      background: #fbfdff;
+    }
+
+    @media (max-width: 980px) {
+      .game-layout { grid-template-columns: 1fr; }
+      .log-list { max-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="panel app-header">
+      <h1 class="app-title">Игра «Чёрный ящик»</h1>
+      <div class="header-actions">
+        <span class="stage-badge">Этап: <span id="stageText">Подготовка</span></span>
+        <button id="backToPrepBtn" type="button">← Назад</button>
+      </div>
+    </header>
+
+    <section id="preparationScreen" class="panel">
+      <h2>Подготовка</h2>
+      <p class="hint-text">Подготовительный шаг: выберите один из трех уровней сложности, затем перейдите в игру.</p>
+      <div id="difficultyGrid" class="difficulty-grid"></div>
+      <div class="prep-start-wrap">
+        <button id="startGameBtn" class="btn-success">Игра</button>
+      </div>
+      <p id="preparationStatusText" class="status-text"></p>
+    </section>
+
+    <section id="gameAndLogScreen" class="game-layout is-hidden">
+      <section class="panel game-board">
+        <h2>Игра</h2>
+        <p class="hint-text">Нужно угадать, какое действие и с каким числом выполнено внутри чёрного ящика.</p>
+        <p id="gameStatusText" class="status-text"></p>
+        <div id="gameItemsGrid" class="items-grid"></div>
+        <div id="resultOverlay" class="result-overlay is-hidden">
+          <div class="overlay-card">
+            <div id="resultOverlayText">Верно</div>
+            <button id="overlayNextTaskBtn" class="btn-success" type="button">Новое задание</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="log-header">
+          <h2 style="margin:0">Лог</h2>
+          <button id="copyLogBtn" class="btn-success is-hidden">Скопировать лог</button>
+        </div>
+        <div id="logList" class="log-list"></div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const DEFAULT_CONFIG = [
+      { id: 'easy', level: 'Уровень 1', actions: 'Сложение, вычитание', selected: true },
+      { id: 'medium', level: 'Уровень 2', actions: 'Сложение, вычитание, умножение, деление', selected: false },
+      { id: 'hard', level: 'Уровень 3', actions: 'Сложение, вычитание, умножение, деление, степень', selected: false }
+    ];
+
+    const DIFFICULTIES = {
+      easy: {
+        title: 'Уровень 1',
+        description: 'Только сложение и вычитание.',
+        operations: [
+          { symbol: '+', name: 'сложение' },
+          { symbol: '-', name: 'вычитание' }
+        ]
+      },
+      medium: {
+        title: 'Уровень 2',
+        description: 'Сложение, вычитание, умножение и деление.',
+        operations: [
+          { symbol: '+', name: 'сложение' },
+          { symbol: '-', name: 'вычитание' },
+          { symbol: '*', name: 'умножение' },
+          { symbol: '/', name: 'деление' }
+        ]
+      },
+      hard: {
+        title: 'Уровень 3',
+        description: 'Добавляется возведение в степень.',
+        operations: [
+          { symbol: '+', name: 'сложение' },
+          { symbol: '-', name: 'вычитание' },
+          { symbol: '*', name: 'умножение' },
+          { symbol: '/', name: 'деление' },
+          { symbol: '^', name: 'возведение в степень' }
+        ]
+      }
+    };
+
+    const state = {
+      stage: 'Подготовка',
+      configRows: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      gameItems: [],
+      selectedIndex: null,
+      step: 0,
+      won: false,
+      log: [],
+      currentTask: null,
+      solved: false
+    };
+
+    const dom = {
+      stageText: document.getElementById('stageText'),
+      startGameBtn: document.getElementById('startGameBtn'),
+      backToPrepBtn: document.getElementById('backToPrepBtn'),
+      preparationScreen: document.getElementById('preparationScreen'),
+      difficultyGrid: document.getElementById('difficultyGrid'),
+      preparationStatusText: document.getElementById('preparationStatusText'),
+      gameAndLogScreen: document.getElementById('gameAndLogScreen'),
+      gameStatusText: document.getElementById('gameStatusText'),
+      gameItemsGrid: document.getElementById('gameItemsGrid'),
+      resultOverlay: document.getElementById('resultOverlay'),
+      resultOverlayText: document.getElementById('resultOverlayText'),
+      overlayNextTaskBtn: document.getElementById('overlayNextTaskBtn'),
+      copyLogBtn: document.getElementById('copyLogBtn'),
+      logList: document.getElementById('logList')
+    };
+
+    function getSelectedRow() {
+      return state.configRows.find((row) => row.selected) || state.configRows[0];
+    }
+
+    function getDifficulty() {
+      return DIFFICULTIES[getSelectedRow().id];
+    }
+
+    function setPreparationStatus(text) {
+      dom.preparationStatusText.textContent = text;
+    }
+
+    function setGameStatus(text) {
+      dom.gameStatusText.textContent = text;
+    }
+
+    function addLog(message) {
+      state.log.push(message);
+      renderLog();
+    }
+
+    function renderLog() {
+      dom.logList.innerHTML = '';
+      state.log.forEach((line) => {
+        const row = document.createElement('div');
+        row.className = 'log-row';
+        row.textContent = line;
+        dom.logList.appendChild(row);
+      });
+      dom.logList.scrollTop = dom.logList.scrollHeight;
+    }
+
+    function renderPreparationTiles() {
+      dom.difficultyGrid.innerHTML = '';
+
+      state.configRows.forEach((row, index) => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = `difficulty-tile${row.selected ? ' is-selected' : ''}`;
+        tile.innerHTML = `
+          <div class="difficulty-tile-title">
+            <span>${row.level}</span>
+            <span class="difficulty-mark">${row.selected ? 'Активно' : 'Уровень'}</span>
+          </div>
+          <div>${row.actions}</div>
+        `;
+        tile.addEventListener('click', () => selectDifficulty(index));
+        dom.difficultyGrid.appendChild(tile);
+      });
+    }
+
+    function renderGameItems() {
+      dom.gameItemsGrid.innerHTML = '';
+      if (!state.currentTask) return;
+
+      const difficulty = getDifficulty();
+      const leftCard = document.createElement('div');
+      leftCard.className = 'item-card';
+      leftCard.innerHTML = `
+        <div class="item-head">
+          <strong>Число слева</strong>
+          <span>${difficulty.title}</span>
+        </div>
+        <div class="number-value">${state.currentTask.left}</div>
+        <p class="hint-text">Исходное число до прохождения через чёрный ящик.</p>
+      `;
+
+      const boxCard = document.createElement('div');
+      boxCard.className = 'item-card';
+      boxCard.innerHTML = `
+        <div class="item-head">
+          <strong>Чёрный ящик</strong>
+          <span>?</span>
+        </div>
+        <div class="black-box-visual">
+          <div>
+            <strong>Чёрный ящик</strong>
+            <div>Угадайте действие и число</div>
+          </div>
+        </div>
+      `;
+
+      const rightCard = document.createElement('div');
+      rightCard.className = 'item-card';
+      rightCard.innerHTML = `
+        <div class="item-head">
+          <strong>Число справа</strong>
+          <span>Результат</span>
+        </div>
+        <div class="number-value">${state.currentTask.right}</div>
+        <p class="hint-text">Итог после действия внутри ящика.</p>
+      `;
+
+      const answerCard = document.createElement('div');
+      answerCard.className = 'item-card';
+      answerCard.innerHTML = `
+        <div class="item-head">
+          <strong>Ваш ответ</strong>
+          <span>Попытка ${state.step + 1}</span>
+        </div>
+        <div class="answer-controls">
+          <label>
+            <span class="field-label">Действие</span>
+            <select id="operationSelect"></select>
+          </label>
+          <label>
+            <span class="field-label">Число</span>
+            <input id="operandInput" type="number" min="1" step="1" />
+          </label>
+        </div>
+        <div id="answerResultText" class="answer-result">Выберите действие и число, затем нажмите «Проверить».</div>
+        <div class="action-row">
+          <button id="checkAnswerBtn" class="btn-success">Проверить</button>
+          <button id="showAnswerBtn">Показать ответ</button>
+        </div>
+      `;
+
+      dom.gameItemsGrid.append(leftCard, boxCard, rightCard, answerCard);
+      renderOperationOptions();
+
+      document.getElementById('checkAnswerBtn').addEventListener('click', checkAnswer);
+      document.getElementById('showAnswerBtn').addEventListener('click', showAnswer);
+      document.getElementById('operandInput').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') checkAnswer();
+      });
+    }
+
+    function validatePreparation() {
+      const selected = state.configRows.filter((row) => row.selected);
+      if (selected.length !== 1) {
+        return { ok: false, message: 'Нужно выбрать ровно один уровень сложности.' };
+      }
+
+      return { ok: true, message: '' };
+    }
+
+    function buildPreparationSummary() {
+      const difficulty = getDifficulty();
+      return `${difficulty.title}: ${difficulty.description.toLowerCase()}`;
+    }
+
+    function selectDifficulty(index) {
+      state.configRows = state.configRows.map((row, rowIndex) => ({
+        ...row,
+        selected: rowIndex === index
+      }));
+      setPreparationStatus(`Выбран ${state.configRows[index].level.toLowerCase()}.`);
+      renderPreparationTiles();
+    }
+
+    function formatOperation(symbol, operand) {
+      if (symbol === '^') return `возведение в степень ${operand}`;
+      if (symbol === '+') return `сложение с ${operand}`;
+      if (symbol === '-') return `вычитание ${operand}`;
+      if (symbol === '*') return `умножение на ${operand}`;
+      return `деление на ${operand}`;
+    }
+
+    function applyOperation(value, symbol, operand) {
+      if (symbol === '+') return value + operand;
+      if (symbol === '-') return value - operand;
+      if (symbol === '*') return value * operand;
+      if (symbol === '/') {
+        if (operand === 0 || value % operand !== 0) return null;
+        return value / operand;
+      }
+      const result = value ** operand;
+      if (!Number.isSafeInteger(result)) return null;
+      return result;
+    }
+
+    function buildCandidates(difficultyId) {
+      const difficulty = DIFFICULTIES[difficultyId];
+      const candidates = [];
+
+      difficulty.operations.forEach((operation) => {
+        if (operation.symbol === '+') {
+          for (let left = 1; left <= 30; left += 1) {
+            for (let operand = 1; operand <= 12; operand += 1) {
+              const right = applyOperation(left, '+', operand);
+              if (right <= 60) candidates.push({ left, right, symbol: '+', operand });
+            }
+          }
+        }
+
+        if (operation.symbol === '-') {
+          for (let left = 2; left <= 40; left += 1) {
+            for (let operand = 1; operand <= 12; operand += 1) {
+              const right = applyOperation(left, '-', operand);
+              if (right != null && right >= 0) candidates.push({ left, right, symbol: '-', operand });
+            }
+          }
+        }
+
+        if (operation.symbol === '*') {
+          for (let left = 2; left <= 12; left += 1) {
+            for (let operand = 2; operand <= 10; operand += 1) {
+              const right = applyOperation(left, '*', operand);
+              if (right <= 100) candidates.push({ left, right, symbol: '*', operand });
+            }
+          }
+        }
+
+        if (operation.symbol === '/') {
+          for (let operand = 2; operand <= 10; operand += 1) {
+            for (let right = 2; right <= 12; right += 1) {
+              candidates.push({ left: right * operand, right, symbol: '/', operand });
+            }
+          }
+        }
+
+        if (operation.symbol === '^') {
+          for (let left = 2; left <= 5; left += 1) {
+            for (let operand = 2; operand <= 3; operand += 1) {
+              const right = applyOperation(left, '^', operand);
+              if (right != null && right <= 125) {
+                candidates.push({ left, right, symbol: '^', operand });
+              }
+            }
+          }
+        }
+      });
+
+      return candidates;
+    }
+
+    function generateTask(difficultyId) {
+      const candidates = buildCandidates(difficultyId);
+      const grouped = new Map();
+
+      candidates.forEach((candidate) => {
+        const key = `${candidate.left}->${candidate.right}`;
+        const list = grouped.get(key) || [];
+        list.push(candidate);
+        grouped.set(key, list);
+      });
+
+      const uniqueTasks = [];
+      grouped.forEach((list) => {
+        if (list.length === 1) uniqueTasks.push(list[0]);
+      });
+
+      if (uniqueTasks.length === 0) return null;
+      return uniqueTasks[Math.floor(Math.random() * uniqueTasks.length)];
+    }
+
+    function renderOperationOptions() {
+      const select = document.getElementById('operationSelect');
+      const input = document.getElementById('operandInput');
+      const resultText = document.getElementById('answerResultText');
+
+      if (!select || !input || !resultText) return;
+
+      select.innerHTML = '';
+      getDifficulty().operations.forEach((operation) => {
+        const option = document.createElement('option');
+        option.value = operation.symbol;
+        option.textContent = `${operation.symbol} (${operation.name})`;
+        select.appendChild(option);
+      });
+
+      input.value = '';
+      input.min = '1';
+      input.max = getSelectedRow().id === 'hard' ? '12' : '20';
+      resultText.textContent = 'Выберите действие и число, затем нажмите «Проверить».';
+    }
+
+    function setAnswerText(text) {
+      const node = document.getElementById('answerResultText');
+      if (node) node.textContent = text;
+    }
+
+    function checkWinCondition() {
+      if (!state.solved) return;
+      state.won = true;
+      state.stage = 'Результаты';
+      dom.stageText.textContent = state.stage;
+      dom.resultOverlay.classList.remove('is-hidden');
+      dom.copyLogBtn.classList.remove('is-hidden');
+    }
+
+    function buildRound() {
+      const selected = getSelectedRow();
+      const task = generateTask(selected.id);
+      if (!task) return false;
+
+      state.currentTask = task;
+      state.step = 0;
+      state.solved = false;
+      state.won = false;
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+      renderGameItems();
+      setGameStatus('Подберите действие и число.');
+      addLog(`Новое задание: ${task.left} -> ${task.right}, ${selected.level.toLowerCase()}.`);
+      return true;
+    }
+
+    function handleGameItemClick(_index) {
+      // В этой игре действие идет через форму ответа, а не по клику по карточкам.
+    }
+
+    function switchToGameScreen() {
+      const check = validatePreparation();
+      if (!check.ok) {
+        setPreparationStatus(check.message);
+        return;
+      }
+
+      state.stage = 'Игра';
+      state.selectedIndex = null;
+      state.step = 0;
+      state.won = false;
+      state.log = [];
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.add('is-hidden');
+      dom.gameAndLogScreen.classList.remove('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+
+      addLog(`Подготовка для игры: ${buildPreparationSummary()}.`);
+      addLog('Игра началась.');
+      setPreparationStatus('');
+
+      if (!buildRound()) {
+        setGameStatus('Не удалось сгенерировать задание для выбранного уровня.');
+      }
+    }
+
+    function switchToPreparationScreen() {
+      state.stage = 'Подготовка';
+      state.selectedIndex = null;
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      setGameStatus('');
+      renderPreparationTiles();
+    }
+
+    function checkAnswer() {
+      if (!state.currentTask || state.solved) return;
+
+      const operationSelect = document.getElementById('operationSelect');
+      const operandInput = document.getElementById('operandInput');
+      const symbol = operationSelect ? operationSelect.value : '';
+      const operand = Math.floor(Number(operandInput ? operandInput.value : NaN));
+
+      if (!Number.isInteger(operand) || operand < 1) {
+        setGameStatus('Введите целое число больше 0.');
+        return;
+      }
+
+      state.step += 1;
+      const attemptText = `Попытка ${state.step}: ${state.currentTask.left} ${symbol} ${operand}.`;
+      const isCorrect = symbol === state.currentTask.symbol && operand === state.currentTask.operand;
+
+      if (isCorrect) {
+        state.solved = true;
+        addLog(`${attemptText} Верно.`);
+        setAnswerText(`Верно: это ${formatOperation(symbol, operand)}.`);
+        dom.resultOverlayText.textContent = 'Верно';
+        setGameStatus('Задание решено. Можно открыть новое.');
+        checkWinCondition();
+        return;
+      }
+
+      addLog(`${attemptText} Неверно.`);
+      setAnswerText('Неверно. Попробуйте ещё раз.');
+      setGameStatus('Ответ не подошёл.');
+    }
+
+    function showAnswer() {
+      if (!state.currentTask || state.solved) return;
+
+      state.solved = true;
+      addLog(`Ответ раскрыт: ${state.currentTask.left} ${state.currentTask.symbol} ${state.currentTask.operand} = ${state.currentTask.right}.`);
+      setAnswerText(`Правильный ответ: ${formatOperation(state.currentTask.symbol, state.currentTask.operand)}.`);
+      dom.resultOverlayText.textContent = 'Ответ';
+      setGameStatus('Ответ показан. Можно открыть новое задание.');
+      checkWinCondition();
+    }
+
+    function nextTask() {
+      state.stage = 'Игра';
+      dom.stageText.textContent = state.stage;
+      buildRound();
+    }
+
+    function resetAll() {
+      state.stage = 'Подготовка';
+      state.configRows = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      state.gameItems = [];
+      state.selectedIndex = null;
+      state.step = 0;
+      state.won = false;
+      state.log = [];
+      state.currentTask = null;
+      state.solved = false;
+
+      dom.stageText.textContent = state.stage;
+      dom.preparationScreen.classList.remove('is-hidden');
+      dom.gameAndLogScreen.classList.add('is-hidden');
+      dom.resultOverlay.classList.add('is-hidden');
+      dom.copyLogBtn.classList.add('is-hidden');
+
+      setPreparationStatus('');
+      setGameStatus('');
+      renderPreparationTiles();
+      renderLog();
+      dom.gameItemsGrid.innerHTML = '';
+    }
+
+    async function copyLogToClipboard() {
+      const text = state.log.join('\n');
+      if (!text) return;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const temp = document.createElement('textarea');
+          temp.value = text;
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          temp.remove();
+        }
+        setGameStatus('Лог скопирован в буфер обмена.');
+      } catch (_err) {
+        setGameStatus('Не удалось скопировать лог.');
+      }
+    }
+
+    function handleHeaderBack() {
+      if (state.stage === 'Подготовка') {
+        window.location.href = './index.html';
+        return;
+      }
+      switchToPreparationScreen();
+    }
+
+    dom.startGameBtn.addEventListener('click', switchToGameScreen);
+    dom.backToPrepBtn.addEventListener('click', handleHeaderBack);
+    dom.overlayNextTaskBtn.addEventListener('click', nextTask);
+    dom.copyLogBtn.addEventListener('click', copyLogToClipboard);
+
+    resetAll();
+  </script>
+</body>
+</html>

@@ -135,6 +135,12 @@
       flex-wrap: wrap;
     }
 
+    .prep-start-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
     .game-board {
       position: relative;
       min-height: 380px;
@@ -232,9 +238,7 @@
       <h1 class="app-title">Игра «Переливания»</h1>
       <div class="header-actions">
         <span class="stage-badge">Этап: <span id="stageText">Подготовка</span></span>
-        <button id="startGameBtn" class="btn-primary">Игра</button>
-        <button id="backToPrepBtn" class="btn-danger is-hidden">Назад в подготовку</button>
-        <button id="resetGameBtn">Сброс</button>
+        <button id="backToPrepBtn" type="button">← Назад</button>
       </div>
     </header>
 
@@ -254,6 +258,9 @@
       <div class="prep-actions">
         <button id="addPreparationRowBtn" class="btn-primary">Добавить бутылку</button>
         <p class="hint-text">В колонке «Победа» задайте объем для нужной бутылки. Нужна минимум одна цель.</p>
+      </div>
+      <div class="prep-start-wrap">
+        <button id="startGameBtn" class="btn-success">Игра</button>
       </div>
       <p id="preparationStatusText" class="status-text"></p>
     </section>
@@ -298,7 +305,6 @@
       stageText: document.getElementById('stageText'),
       startGameBtn: document.getElementById('startGameBtn'),
       backToPrepBtn: document.getElementById('backToPrepBtn'),
-      resetGameBtn: document.getElementById('resetGameBtn'),
       preparationScreen: document.getElementById('preparationScreen'),
       preparationTableBody: document.getElementById('preparationTableBody'),
       preparationStatusText: document.getElementById('preparationStatusText'),
@@ -535,8 +541,6 @@
       dom.stageText.textContent = state.stage;
       dom.preparationScreen.classList.add('is-hidden');
       dom.gameAndLogScreen.classList.remove('is-hidden');
-      dom.backToPrepBtn.classList.remove('is-hidden');
-      dom.startGameBtn.classList.add('is-hidden');
       dom.resultOverlay.classList.add('is-hidden');
       dom.copyLogBtn.classList.add('is-hidden');
 
@@ -556,9 +560,6 @@
       dom.stageText.textContent = state.stage;
       dom.preparationScreen.classList.remove('is-hidden');
       dom.gameAndLogScreen.classList.add('is-hidden');
-      dom.backToPrepBtn.classList.add('is-hidden');
-      dom.startGameBtn.classList.remove('is-hidden');
-
       setGameStatus('');
       renderPreparationTable();
     }
@@ -575,8 +576,6 @@
       dom.stageText.textContent = state.stage;
       dom.preparationScreen.classList.remove('is-hidden');
       dom.gameAndLogScreen.classList.add('is-hidden');
-      dom.backToPrepBtn.classList.add('is-hidden');
-      dom.startGameBtn.classList.remove('is-hidden');
       dom.resultOverlay.classList.add('is-hidden');
       dom.copyLogBtn.classList.add('is-hidden');
 
@@ -608,9 +607,16 @@
       }
     }
 
+    function handleHeaderBack() {
+      if (state.stage === 'Подготовка') {
+        window.location.href = './index.html';
+        return;
+      }
+      switchToPreparationScreen();
+    }
+
     dom.startGameBtn.addEventListener('click', switchToGameScreen);
-    dom.backToPrepBtn.addEventListener('click', switchToPreparationScreen);
-    dom.resetGameBtn.addEventListener('click', resetAll);
+    dom.backToPrepBtn.addEventListener('click', handleHeaderBack);
     dom.copyLogBtn.addEventListener('click', copyLogToClipboard);
 
     dom.addPreparationRowBtn.addEventListener('click', () => {
