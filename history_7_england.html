@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Викторина: Англия в XVI — начале XVII в. (§ 11)</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: #fff;
+            padding: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .header-text { flex: 1 1 300px; }
+        .header-text h1 { font-size: 1.6em; margin-bottom: 8px; }
+        .header-text p { font-size: 0.95em; opacity: 0.9; }
+
+        .qr-block {
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .qr-block #qrcode { width: 100px; height: 100px; }
+        .qr-block #qrcode img,
+        .qr-block #qrcode canvas { width: 100px !important; height: 100px !important; display: block; }
+        .qr-block .qr-label { font-size: 0.7em; color: #555; text-align: center; max-width: 100px; line-height: 1.2; }
+
+        .progress-bar { height: 6px; background: #ecf0f1; position: relative; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .quiz-body { padding: 25px 30px 40px; }
+
+        .question {
+            background: #f8f9fa;
+            border-left: 5px solid #2a5298;
+            border-radius: 10px;
+            padding: 20px 22px;
+            margin-bottom: 22px;
+            transition: box-shadow 0.3s ease;
+        }
+        .question:hover { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+        .question.correct { border-left-color: #27ae60; background: #eafaf1; }
+        .question.incorrect { border-left-color: #e74c3c; background: #fdedec; }
+
+        .question-text {
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: #2a5298;
+            color: #fff;
+            font-size: 0.8em;
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-right: 8px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .difficulty.base { background: #d6eaf8; color: #2471a3; }
+        .difficulty.hard { background: #fdebd0; color: #b9770e; }
+
+        .options { display: flex; flex-direction: column; gap: 10px; }
+
+        .option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fff;
+            border: 2px solid #dfe6e9;
+            border-radius: 8px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.97em;
+            line-height: 1.4;
+        }
+        .option:hover { border-color: #2a5298; background: #eef3fb; }
+        .option input[type="radio"] {
+            margin-top: 3px;
+            accent-color: #2a5298;
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+        }
+        .option.selected { border-color: #2a5298; background: #eef3fb; }
+        .option.correct-answer { border-color: #27ae60 !important; background: #eafaf1 !important; }
+        .option.wrong-answer { border-color: #e74c3c !important; background: #fdedec !important; }
+        .option.disabled { cursor: default; opacity: 0.85; }
+
+        .option-letter { font-weight: bold; color: #2a5298; flex-shrink: 0; }
+        .option.correct-answer .option-letter { color: #27ae60; }
+        .option.wrong-answer .option-letter { color: #e74c3c; }
+
+        .explanation {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 15px;
+            background: #fff9e6;
+            border-left: 4px solid #f1c40f;
+            border-radius: 6px;
+            font-size: 0.92em;
+            line-height: 1.5;
+            color: #7d6608;
+        }
+        .explanation.show { display: block; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        button {
+            font-family: inherit;
+            font-size: 1em;
+            font-weight: 600;
+            padding: 13px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+        .btn-check:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(39, 174, 96, 0.4); }
+
+        .btn-reset { background: #ecf0f1; color: #2c3e50; }
+        .btn-reset:hover { background: #d5dbdb; }
+
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .result {
+            display: none;
+            text-align: center;
+            padding: 25px;
+            margin-top: 25px;
+            border-radius: 12px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        .result.show { display: block; }
+        .result.good { background: linear-gradient(135deg, #d4efdf, #a9dfbf); color: #1e8449; border: 2px solid #27ae60; }
+        .result.medium { background: linear-gradient(135deg, #fef9e7, #fdebd0); color: #b9770e; border: 2px solid #f1c40f; }
+        .result.bad { background: linear-gradient(135deg, #fadbd8, #f5b7b1); color: #922b21; border: 2px solid #e74c3c; }
+        .result .score-number { font-size: 1.6em; display: block; margin-bottom: 5px; }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            background: #f8f9fa;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-body { padding: 15px 15px 30px; }
+            header { padding: 18px 15px; justify-content: center; text-align: center; }
+            .header-text h1 { font-size: 1.2em; }
+            .qr-block #qrcode,
+            .qr-block #qrcode img,
+            .qr-block #qrcode canvas { width: 80px !important; height: 80px !important; }
+            .qr-block .qr-label { max-width: 80px; font-size: 0.65em; }
+            .question-text { font-size: 0.98em; }
+            .option { font-size: 0.9em; padding: 10px 12px; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-text">
+            <h1>🏰 Викторина по истории</h1>
+            <p>§ 11. Англия в XVI — начале XVII в. | 7 класс</p>
+        </div>
+        <div class="qr-block">
+            <div id="qrcode"></div>
+            <div class="qr-label">Отсканируйте, чтобы пройти на телефоне</div>
+        </div>
+    </header>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="quiz-body" id="quizBody"></div>
+
+    <div class="controls">
+        <button class="btn-check" id="checkBtn">✅ Проверить ответы</button>
+        <button class="btn-reset" id="resetBtn">🔄 Пройти заново</button>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <div class="footer">
+        Составлено по учебнику: В. Р. Мединский, А. О. Чубарьян. История. Всеобщая история. История Нового времени. Конец XV — XVII в. 7 класс.
+    </div>
+</div>
+
+<script>
+    // ======================= БАЗА ВОПРОСОВ =======================
+    const baseQuestions = [
+        {
+            difficulty: "base",
+            text: "Какая династия утвердилась в Англии в 1485 году после Войны Алой и Белой розы?",
+            options: ["Стюарты", "Тюдоры", "Плантагенеты", "Габсбурги"],
+            correct: 1,
+            explanation: "После Войны Алой и Белой розы с 1485 г. в Англии утвердилась династия Тюдоров."
+        },
+        {
+            difficulty: "base",
+            text: "На кого Тюдоры сделали свою главную опору, укрепляя королевскую власть?",
+            options: [
+                "На крупных землевладельцев-аристократов",
+                "На католическое духовенство",
+                "На среднее и мелкое дворянство",
+                "На крестьянство"
+            ],
+            correct: 2,
+            explanation: "В противовес крупным землевладельцам Тюдоры сделали своей опорой среднее и мелкое дворянство, раздавая владения и титулы."
+        },
+        {
+            difficulty: "base",
+            text: "Как назывались права государя на совершение тех или иных действий, которые ограничивались традицией?",
+            options: ["Регалии", "Прерогативы", "Привилегии", "Вольности"],
+            correct: 1,
+            explanation: "Прерогативы — это права государя на совершение тех или иных действий. В Англии они ограничивались традицией."
+        },
+        {
+            difficulty: "base",
+            text: "Какой акт 1534 года провозгласил церковь независимой от Рима, а короля — её главой?",
+            options: ["Нантский эдикт", "Акт о супрематии", "Билль о правах", "Аугсбургский мир"],
+            correct: 1,
+            explanation: "В 1534 г. был принят Акт о супрематии (верховенстве), провозгласивший церковь независимой от Рима, английской, а короля — её главой."
+        },
+        {
+            difficulty: "base",
+            text: "Кто из перечисленных был казнён за отказ принять Акт о верховенстве короля в церковных делах?",
+            options: ["Томас Кромвель", "Джон Фишер", "Фрэнсис Дрейк", "Уильям Шекспир"],
+            correct: 1,
+            explanation: "Епископ Рочестерский Джон Фишер и лорд-канцлер Англии Томас Мор были казнены за отказ принять Акт о верховенстве короля в церковных делах."
+        },
+        {
+            difficulty: "base",
+            text: "Как называли тех, кто выступал за очищение англиканской церкви от остатков католицизма?",
+            options: ["Гугеноты", "Пуритане", "Иезуиты", "Лютеране"],
+            correct: 1,
+            explanation: "Пуританами (от лат. purus — чистый) называли тех, кто выступал за очищение англиканской церкви от остатков католицизма."
+        },
+        {
+            difficulty: "base",
+            text: "Как называлась часть пуритан, которая хотела, чтобы церковь управлялась выборными главами общин?",
+            options: ["Индепенденты", "Пресвитериане", "Левеллеры", "Кавалеры"],
+            correct: 1,
+            explanation: "Пресвитериане хотели, чтобы церковь управлялась выборными главами общин — пресвитерами."
+        },
+        {
+            difficulty: "base",
+            text: "Какое событие 1588 года укрепило веру англичан в то, что они — избранный народ?",
+            options: [
+                "Разгром Непобедимой армады",
+                "Начало правления Елизаветы I",
+                "Принятие Акта о супрематии",
+                "Основание Виргинии"
+            ],
+            correct: 0,
+            explanation: "В 1588 г. у британских берегов погибла Непобедимая армада — испанский флот, посланный с целью свергнуть Елизавету. Это укрепило веру англичан в божественное покровительство."
+        },
+        {
+            difficulty: "base",
+            text: "Что стало главной проблемой Стюартов, мешавшей им укрепить абсолютную власть?",
+            options: ["Отсутствие наследников", "Финансовые трудности", "Война с Францией", "Эпидемия чумы"],
+            correct: 1,
+            explanation: "Главной проблемой Стюартов стала финансовая: без денег короли не могли ни взять под контроль дворянство, ни создать бюрократический аппарат, ни содержать наёмную армию."
+        },
+        {
+            difficulty: "base",
+            text: "Как называлось нетитулованное мелкое и среднее дворянство в Англии, склонное к экономическим новшествам?",
+            options: ["Идальго", "Шляхта", "Джентри", "Гранды"],
+            correct: 2,
+            explanation: "Джентри (от англ. gentle — благородный) — нетитулованное мелкое и среднее дворянство в Англии, которое стало давать хорошее образование детям, приобретать влияние в парламенте."
+        }
+    ];
+
+    const hardQuestions = [
+        {
+            difficulty: "hard",
+            text: "Почему, согласно учебнику, Тюдоры «не посягали на полномочия парламента», а напротив, стремились на него опереться?",
+            options: [
+                "Парламент был единственным органом, утверждавшим налоги, а Тюдорам нужны были средства",
+                "Парламент обладал военной силой, которой боялись короли",
+                "Тюдоры хотели передать парламенту всю полноту власти",
+                "Парламент контролировался папой римским"
+            ],
+            correct: 0,
+            explanation: "В ведении парламента находилось учреждение новых налогов. Тюдоры стремились опереться на парламент, что было особенно важно в условиях прихода к власти новой династии."
+        },
+        {
+            difficulty: "hard",
+            text: "В чём заключалось ключевое различие между английской и французской моделями абсолютизма?",
+            options: [
+                "В Англии король не имел права издавать законы, а во Франции имел",
+                "В Англии отсутствовала главная опора абсолютизма — наёмная армия, а бюрократия была немногочисленной",
+                "Во Франции парламент имел больше власти, чем в Англии",
+                "В Англии король был главой церкви, а во Франции — нет"
+            ],
+            correct: 1,
+            explanation: "При Тюдорах бюрократия была относительно немногочисленной и отсутствовала главная опора абсолютизма — наёмная армия, хотя много внимания уделялось строительству флота."
+        },
+        {
+            difficulty: "hard",
+            text: "Почему Генрих VIII, получивший от папы титул «защитник веры», всё же провёл Реформацию в Англии? Укажите две причины, названные в учебнике.",
+            options: [
+                "Личная обида на папу и желание присвоить церковные земли",
+                "Отказ папы разрешить новый брак (отсутствие наследника мужского пола) и надежда пополнить казну за счёт имущества церкви",
+                "Давление со стороны парламента и угроза крестьянского восстания",
+                "Влияние Мартина Лютера и поддержка иезуитов"
+            ],
+            correct: 1,
+            explanation: "Генрих VIII не смог добиться от папы разрешения на новый брак, поскольку предыдущий не дал ему наследника мужского пола. Также он надеялся пополнить казну за счёт имущества церкви."
+        },
+        {
+            difficulty: "hard",
+            text: "Почему, несмотря на конфискацию огромных церковных земель, английская монархия не смогла стать независимой от парламента?",
+            options: [
+                "Земли были переданы парламенту",
+                "Англия вела войны, и нужда в средствах заставила продать многие из этих земель",
+                "Церковные земли оказались непригодными для хозяйства",
+                "Папа римский потребовал их возврата"
+            ],
+            correct: 1,
+            explanation: "Если бы конфискованные земли остались в руках короны, они могли бы сделать её независимой от парламента. Однако Англия в середине XVI в. вела войны, и нужда в средствах заставила продать многие из этих земель."
+        },
+        {
+            difficulty: "hard",
+            text: "В чём, согласно учебнику, проявилась противоречивость религиозной политики Генриха VIII?",
+            options: [
+                "Он поддерживал лютеранство, но запрещал кальвинизм",
+                "Он не имел чёткого плана реформы, и правила постоянно менялись: священникам то разрешали, то запрещали жениться, на стенах церквей то изображали, то замазывали сцены из Библии",
+                "Он сначала принял католицизм, а затем стал главой англиканской церкви",
+                "Он поддерживал пуритан, но запрещал индепендентов"
+            ],
+            correct: 1,
+            explanation: "Не имея чёткого плана реформы, король не был последовательным, правила постоянно менялись: священникам то разрешали, то запрещали жениться, на стенах церквей то изображали сцены из Библии, то замазывали их."
+        },
+        {
+            difficulty: "hard",
+            text: "Какую роль, согласно тексту параграфа, сыграло издание Библии на английском языке в формировании общественного сознания?",
+            options: [
+                "Оно привело к полному запрету чтения Библии",
+                "Оно укрепило власть папы римского",
+                "Оно воспитывало небывалую независимость суждений, так как каждый, кто умел читать, мог самостоятельно толковать Писание",
+                "Оно привело к созданию ордена иезуитов"
+            ],
+            correct: 2,
+            explanation: "После перевода Библии на английский каждый, кто умел читать, думал, что говорит со всемогущим Богом и понимает, что он сказал. Это воспитывало небывалую независимость суждений."
+        },
+        {
+            difficulty: "hard",
+            text: "Какой символический смысл, согласно учебнику, Елизавета I вкладывала в образ белого пеликана?",
+            options: [
+                "Символ мудрости и знания",
+                "Символ самопожертвования (пеликан кормит птенцов собственной кровью)",
+                "Символ непобедимой военной мощи",
+                "Символ чистоты и непорочности"
+            ],
+            correct: 1,
+            explanation: "Своим символом государыня избрала белого пеликана — символ самопожертвования (считалось, что, спасая птенцов от голода, пеликан кормит их собственной кровью)."
+        },
+        {
+            difficulty: "hard",
+            text: "Почему, согласно тексту параграфа, аграрная революция в Англии началась раньше и проходила быстрее, чем в других странах Европы?",
+            options: [
+                "Из-за отсутствия крупных землевладельцев",
+                "Из-за быстрого роста населения, что способствовало увеличению цен на продовольствие и шерсть, и заставило вести сельское хозяйство по-новому",
+                "Из-за запрета на торговлю шерстью",
+                "Из-за поддержки крестьянских общин королём"
+            ],
+            correct: 1,
+            explanation: "Быстрый рост населения способствовал увеличению цен на продовольствие и на шерсть (для производства тканей), и это заставляло вести сельское хозяйство по-новому, на основе капитализма."
+        },
+        {
+            difficulty: "hard",
+            text: "В чём заключалось принципиальное отличие «нового дворянства» (джентри) от старого дворянства, согласно учебнику?",
+            options: [
+                "Джентри были титулованными аристократами, а старое дворянство — нет",
+                "Джентри стремились к извлечению прибыли, не чуждались новшеств, создавали мануфактуры, вкладывали деньги в торговлю, а старое дворянство жило как раньше и теряло влияние",
+                "Джентри жили исключительно на королевскую службу",
+                "Джентри были противниками Реформации"
+            ],
+            correct: 1,
+            explanation: "Часть нетитулованного среднего и мелкого дворянства, джентри, стремилась к извлечению прибыли, не чуждалась новшеств, создавала мануфактуры, вкладывала деньги в торговлю. Старое дворянство жило как раньше, начало терять влияние."
+        },
+        {
+            difficulty: "hard",
+            text: "Почему, согласно учебнику, Яков I и Карл I не смогли продолжить политику Тюдоров по укреплению абсолютной власти? Укажите главную причину.",
+            options: [
+                "Они были недостаточно образованны",
+                "Они не имели поддержки парламента и не могли вводить новые налоги без его согласия, а финансовые ресурсы были ограничены",
+                "Они были католиками",
+                "Они отказались от использования наёмной армии"
+            ],
+            correct: 1,
+            explanation: "Стюарты попытались продолжить курс Тюдоров на укрепление абсолютной власти, однако столкнулись с большими трудностями. Главной проблемой стала финансовая: без денег короли не могли ни взять под контроль дворянство, ни создать бюрократический аппарат, ни содержать наёмную армию. Введение новых налогов было невозможно без согласия парламента, который раз за разом отказывал им в этом."
+        }
+    ];
+
+    // ======================= ПЕРЕМЕШИВАНИЕ =======================
+    function shuffle(array) {
+        const arr = array.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    let questions = [];
+
+    function buildQuestions() {
+        // Перемешиваем вопросы отдельно внутри каждого уровня
+        // и объединяем: сначала базовые, потом повышенной сложности.
+        // Номера расставляем ПО ПОРЯДКУ (1..N) уже после перемешивания.
+        const mixed = [
+            ...shuffle(baseQuestions),
+            ...shuffle(hardQuestions)
+        ];
+        return mixed.map((q, idx) => ({
+            ...q,
+            number: idx + 1
+        }));
+    }
+
+    let userAnswers = [];
+    let checked = false;
+
+    const quizBody = document.getElementById('quizBody');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const resultDiv = document.getElementById('result');
+    const progressFill = document.getElementById('progressFill');
+
+    const letters = ['А', 'Б', 'В', 'Г'];
+
+    // ======================= РЕНДЕР =======================
+    function renderQuiz() {
+        quizBody.innerHTML = '';
+        questions.forEach((q, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question';
+            qDiv.id = `question-${index}`;
+
+            let optionsHTML = '';
+            q.options.forEach((opt, optIndex) => {
+                optionsHTML += `
+                    <label class="option" data-q="${index}" data-o="${optIndex}" id="option-${index}-${optIndex}">
+                        <input type="radio" name="q${index}" value="${optIndex}" ${userAnswers[index] === optIndex ? 'checked' : ''}>
+                        <span class="option-letter">${letters[optIndex]})</span>
+                        <span>${opt}</span>
+                    </label>
+                `;
+            });
+
+            qDiv.innerHTML = `
+                <div class="question-text">
+                    <span class="question-number">${q.number}</span>
+                    ${q.text}
+                    <span class="difficulty ${q.difficulty}">${q.difficulty === 'base' ? 'базовый' : 'повышенный'}</span>
+                </div>
+                <div class="options">
+                    ${optionsHTML}
+                </div>
+                <div class="explanation" id="explanation-${index}">
+                    <strong>💡 Пояснение:</strong> ${q.explanation}
+                </div>
+            `;
+            quizBody.appendChild(qDiv);
+        });
+
+        attachListeners();
+        updateProgress();
+    }
+
+    function attachListeners() {
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                if (checked) return;
+                const qIndex = parseInt(this.dataset.q);
+                const oIndex = parseInt(this.dataset.o);
+
+                document.querySelectorAll(`.option[data-q="${qIndex}"]`).forEach(el => {
+                    el.classList.remove('selected');
+                });
+
+                this.classList.add('selected');
+                userAnswers[qIndex] = oIndex;
+
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+
+                updateProgress();
+            });
+        });
+    }
+
+    function updateProgress() {
+        const answered = userAnswers.filter(a => a !== null).length;
+        const percent = (answered / questions.length) * 100;
+        progressFill.style.width = percent + '%';
+    }
+
+    // ======================= ПРОВЕРКА =======================
+    function checkAnswers() {
+        if (checked) return;
+
+        const unanswered = userAnswers.filter(a => a === null).length;
+        if (unanswered > 0) {
+            if (!confirm(`Вы ответили не на все вопросы. Осталось ${unanswered}. Всё равно проверить?`)) {
+                return;
+            }
+        }
+
+        checked = true;
+        let correctCount = 0;
+
+        questions.forEach((q, index) => {
+            const qDiv = document.getElementById(`question-${index}`);
+            const explanation = document.getElementById(`explanation-${index}`);
+            const userAnswer = userAnswers[index];
+
+            q.options.forEach((opt, optIndex) => {
+                const optEl = document.getElementById(`option-${index}-${optIndex}`);
+                optEl.classList.add('disabled');
+                optEl.querySelector('input').disabled = true;
+
+                if (optIndex === q.correct) {
+                    optEl.classList.add('correct-answer');
+                }
+                if (optIndex === userAnswer && userAnswer !== q.correct) {
+                    optEl.classList.add('wrong-answer');
+                }
+            });
+
+            if (userAnswer === q.correct) {
+                qDiv.classList.add('correct');
+                correctCount++;
+            } else {
+                qDiv.classList.add('incorrect');
+            }
+
+            explanation.classList.add('show');
+        });
+
+        const total = questions.length;
+        const percent = Math.round((correctCount / total) * 100);
+
+        resultDiv.className = 'result show';
+        if (percent >= 80) resultDiv.classList.add('good');
+        else if (percent >= 50) resultDiv.classList.add('medium');
+        else resultDiv.classList.add('bad');
+
+        let grade = '';
+        if (percent >= 90) grade = 'Отлично! 🏆';
+        else if (percent >= 75) grade = 'Хорошо! 👍';
+        else if (percent >= 50) grade = 'Неплохо, но есть над чем поработать. 📖';
+        else grade = 'Стоит повторить параграф. 💪';
+
+        resultDiv.innerHTML = `
+            <span class="score-number">${correctCount} из ${total} (${percent}%)</span>
+            ${grade}
+        `;
+
+        checkBtn.disabled = true;
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // ======================= СБРОС =======================
+    function resetQuiz() {
+        checked = false;
+        resultDiv.className = 'result';
+        resultDiv.innerHTML = '';
+        checkBtn.disabled = false;
+
+        // Заново перемешиваем и перенумеровываем
+        questions = buildQuestions();
+        userAnswers = new Array(questions.length).fill(null);
+
+        renderQuiz();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    checkBtn.addEventListener('click', checkAnswers);
+    resetBtn.addEventListener('click', resetQuiz);
+
+    // ======================= QR-КОД =======================
+    function generateQR() {
+        const url = window.location.href;
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+            text: url,
+            width: 100,
+            height: 100,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+
+    // ======================= ИНИЦИАЛИЗАЦИЯ =======================
+    questions = buildQuestions();
+    userAnswers = new Array(questions.length).fill(null);
+    renderQuiz();
+    generateQR();
+</script>
+
+</body>
+</html>
